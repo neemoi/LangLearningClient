@@ -1,0 +1,91 @@
+.lessons-management {
+    padding: 20px;
+  }
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  .back-navigation {
+    margin-bottom: 1rem;
+  }
+  
+  .back-button {
+    color: #6c757d;
+    text-decoration: none;
+  }
+  
+  .back-button:hover {
+    color: #000000;
+  }
+  
+  .management-header, .lesson-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .header-icon {
+    color: #6c757d;
+  }
+  
+  .fixed-table-container {
+    overflow-x: auto;
+  }
+  
+  .lessons-table {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .ratio-16x9 {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+  }
+  
+  .ratio-16x9 iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0.25rem;
+  }
+  
+  .modal-content {
+    border-radius: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .management-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .search-refresh {
+      width: 100%;
+      margin-top: 1rem;
+    }
+  }
+
+  .fixed-table-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .lessons-management {
+    padding: 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+
+  
