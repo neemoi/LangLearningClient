@@ -1,6 +1,8 @@
-import React from 'react';
-import { Tabs, Tab, Card, Badge, Accordion, ListGroup, Alert, Button } from 'react-bootstrap';
-import { FaEdit, FaTrash, FaPlusCircle } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { Tabs, Tab, Card, Accordion, Alert, Button} from 'react-bootstrap';
+import { FaEdit, FaTrash, FaPlusCircle, FaQuestionCircle } from 'react-icons/fa';
+import QuizQuestions from '../quiz/QuizQuestions';
+
 
 const LessonTabs = ({
   activeKey,
@@ -11,8 +13,22 @@ const LessonTabs = ({
   handleDeleteWord,
   setShowPhraseAddModal,
   openPhraseEditModal,
-  handleDeletePhrase
+  handleDeletePhrase,
+  setShowQuizAddModal,
+  openQuizEditModal,
+  handleDeleteQuiz,
 }) => {
+  const [expandedQuiz, setExpandedQuiz] = useState(null);
+
+  const toggleQuizQuestions = (quizId) => {
+    setExpandedQuiz(expandedQuiz === quizId ? null : quizId);
+  };
+
+  const getQuizQuestions = (quizId) => {
+    const quiz = lesson.quizzes?.find(q => q.id === quizId);
+    return quiz?.questions || [];
+  };
+
   return (
     <Tabs
       activeKey={activeKey}
@@ -28,7 +44,6 @@ const LessonTabs = ({
             <Button 
               variant="link" 
               size="sm" 
-              className="add-word-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowWordAddModal(true);
@@ -42,25 +57,21 @@ const LessonTabs = ({
         <div className="lesson-words">
           {lesson.words?.length > 0 ? (
             lesson.words.map(word => (
-              <Card key={word.id} className="word-card">
+              <Card key={word.id} className="word-card mb-3">
                 {word.imageUrl && (
                   <div className="word-image">
-                    <img
-                      src={word.imageUrl}
-                      alt={word.name}
-                      onError={(e) => e.target.style.display = 'none'}
-                    />
+                    <img src={word.imageUrl} alt={word.name} onError={(e) => e.target.style.display = 'none'} />
                   </div>
                 )}
                 <Card.Body>
                   <Card.Title>{word.name}</Card.Title>
                   <Card.Text>{word.translation}</Card.Text>
-                  {word.isAdditional && <Badge bg="info">Доп.</Badge>}
-                  <div className="word-actions">
+                  <div className="word-actions mt-2">
                     <Button 
                       variant="outline-primary" 
                       size="sm" 
                       onClick={() => openWordEditModal(word)}
+                      className="me-2"
                     >
                       <FaEdit />
                     </Button>
@@ -89,7 +100,6 @@ const LessonTabs = ({
             <Button 
               variant="link" 
               size="sm" 
-              className="add-phrase-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowPhraseAddModal(true);
@@ -115,6 +125,7 @@ const LessonTabs = ({
                           e.stopPropagation();
                           openPhraseEditModal(phrase);
                         }}
+                        className="me-2"
                       >
                         <FaEdit />
                       </Button>
@@ -150,18 +161,79 @@ const LessonTabs = ({
         </Accordion>
       </Tab>
 
-      <Tab eventKey="quizzes" title={`Тесты (${lesson.quizzes?.length || 0})`}>
-        <ListGroup>
+      <Tab 
+        eventKey="quizzes" 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>Тесты ({lesson.quizzes?.length || 0})</span>
+            <Button 
+              variant="link" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowQuizAddModal(true);
+              }}
+            >
+              <FaPlusCircle size={18} />
+            </Button>
+          </div>
+        }
+      >
+        <div className="quizzes-container">
           {lesson.quizzes?.length > 0 ? (
             lesson.quizzes.map(quiz => (
-              <ListGroup.Item key={quiz.id}>
-                <strong>{quiz.type}</strong> — {quiz.questionCount} вопросов
-              </ListGroup.Item>
+              <div key={quiz.id} className="quiz-item mb-3">
+                <Card>
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <Card.Title>
+                          {quiz.type === 'NOUNS' ? 'Тест по существительным' : 'Грамматический тест'}
+                        </Card.Title>
+                        <Card.Subtitle className="mb-2 text-muted">
+                          Создан: {new Date(quiz.createdAt).toLocaleDateString()}
+                        </Card.Subtitle>
+                      </div>
+                      <div>
+                        <Button 
+                          variant="outline-primary" 
+                          size="sm" 
+                          onClick={() => openQuizEditModal(quiz)}
+                          className="me-2"
+                        >
+                          <FaEdit />
+                        </Button>
+                        <Button 
+                          variant="outline-danger" 
+                          size="sm"
+                          onClick={() => handleDeleteQuiz(quiz.id)}
+                          className="me-2"
+                        >
+                          <FaTrash />
+                        </Button>
+                        <Button 
+                          variant={expandedQuiz === quiz.id ? 'secondary' : 'outline-secondary'}
+                          size="sm"
+                          onClick={() => toggleQuizQuestions(quiz.id)}
+                        >
+                          <FaQuestionCircle />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {expandedQuiz === quiz.id && (
+                      <div className="mt-3">
+                        <QuizQuestions questions={getQuizQuestions(quiz.id)} />
+                      </div>
+                    )}
+                  </Card.Body>
+                </Card>
+              </div>
             ))
           ) : (
             <Alert variant="info">Нет тестов</Alert>
           )}
-        </ListGroup>
+        </div>
       </Tab>
     </Tabs>
   );

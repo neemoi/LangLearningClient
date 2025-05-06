@@ -9,6 +9,7 @@ import {
   FaSearch, FaSyncAlt, FaPlus, FaEye, FaEdit, FaTrashAlt, FaArrowLeft
 } from 'react-icons/fa';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 
 const PAGE_SIZE = 10;
 
@@ -32,8 +33,8 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   const fetchLessons = useCallback(async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch('https://localhost:7119/api/Lessons');
+      setIsLoading(true); 
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -89,7 +90,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`https://localhost:7119/api/Lessons/${currentLesson.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${currentLesson.id}`, {
         method: 'DELETE'
       });
       
@@ -142,8 +143,8 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
     try {
       const url = currentLesson 
-        ? `https://localhost:7119/api/Lessons/${currentLesson.id}`
-        : 'https://localhost:7119/api/Lessons';
+        ? `${API_CONFIG.BASE_URL}/api/Lessons/${currentLesson.id}`
+        : `${API_CONFIG.BASE_URL}/api/Lessons`;
       
       const method = currentLesson ? 'PUT' : 'POST';
       const body = currentLesson

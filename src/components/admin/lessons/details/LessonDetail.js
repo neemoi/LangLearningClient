@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Button,
-  Spinner,
-  Alert,
-  Card,
-  Badge
-} from 'react-bootstrap';
+import { Button, Spinner, Alert, Card, Badge } from 'react-bootstrap';
 import YouTube from 'react-youtube';
 import WordEditModal from '../words/WordEditModal';
 import PhraseEditModal from '../phrases/PhrasesEditModal';
 import WordAddModal from '../words/WordAddModal';
 import PhraseAddModal from '../phrases/PhrasesAddModal';
+import QuizAddModal from '../quiz/QuizAddModal';
+import QuizEditModal from '../quiz/QuizEditModal';
 import LessonTabs from '../details/LessonTabs';
+import API_CONFIG from '../../../src/config';
 import './LessonDetail.css';
 
 const LessonDetail = () => {
@@ -53,7 +50,12 @@ const LessonDetail = () => {
     imageUrl: ''
   });
 
+  const [showQuizAddModal, setShowQuizAddModal] = useState(false);
+  const [showQuizEditModal, setShowQuizEditModal] = useState(false);
+  const [currentQuiz, setCurrentQuiz] = useState(null);
+
   const validateUrl = (url) => {
+    if (!url) return true;
     try {
       new URL(url);
       return true;
@@ -66,8 +68,8 @@ const LessonDetail = () => {
     const newErrors = {
       name: !wordFormData.name ? 'Поле обязательно для заполнения' : '',
       translation: !wordFormData.translation ? 'Поле обязательно для заполнения' : '',
-      imageUrl: !wordFormData.imageUrl ? 'Поле обязательно для заполнения' : 
-               !validateUrl(wordFormData.imageUrl) ? 'Некорректный URL' : ''
+      imageUrl: wordFormData.imageUrl && !validateUrl(wordFormData.imageUrl) 
+        ? 'Некорректный URL' : ''
     };
     
     setWordErrors(newErrors);
@@ -78,8 +80,8 @@ const LessonDetail = () => {
     const newErrors = {
       phraseText: !phraseFormData.phraseText ? 'Поле обязательно для заполнения' : '',
       translation: !phraseFormData.translation ? 'Поле обязательно для заполнения' : '',
-      imageUrl: !phraseFormData.imageUrl ? 'Поле обязательно для заполнения' : 
-               !validateUrl(phraseFormData.imageUrl) ? 'Некорректный URL' : ''
+      imageUrl: phraseFormData.imageUrl && !validateUrl(phraseFormData.imageUrl) 
+        ? 'Некорректный URL' : ''
     };
     
     setPhraseErrors(newErrors);
@@ -87,10 +89,11 @@ const LessonDetail = () => {
   };
 
   const getYouTubeVideoId = (url) => {
+    if (!url) return null;
     const match = url.match(
       /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/s]{11})/
     );
-    return match?.[1];
+    return match?.[1] || null;
   };
 
   useEffect(() => {
@@ -98,7 +101,7 @@ const LessonDetail = () => {
       try {
         if (!id) throw new Error('ID урока не указан');
         setLoading(true);
-        const res = await fetch(`https://localhost:7119/api/Lessons/${id}`);
+        const res = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${id}`);
         if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
         const data = await res.json();
         setLesson(data);
@@ -116,7 +119,7 @@ const LessonDetail = () => {
     if (!validateWordForm()) return;
 
     try {
-      const response = await fetch('https://localhost:7119/api/words', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/words`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +135,7 @@ const LessonDetail = () => {
       const newWord = await response.json();
       setLesson(prev => ({
         ...prev,
-        words: [...prev.words, newWord]
+        words: [...(prev.words || []), newWord]
       }));
       setShowWordAddModal(false);
       setWordFormData({
@@ -152,10 +155,10 @@ const LessonDetail = () => {
   };
 
   const handleEditWord = async () => {
-    if (!validateWordForm()) return;
+    if (!validateWordForm() || !currentWord?.id) return;
 
     try {
-      const response = await fetch(`https://localhost:7119/api/words/${currentWord.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/words/${currentWord.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -172,7 +175,7 @@ const LessonDetail = () => {
 
       setLesson(prev => ({
         ...prev,
-        words: prev.words.map(word => 
+        words: (prev.words || []).map(word => 
           word.id === currentWord.id ? { 
             ...word, 
             name: wordFormData.name,
@@ -192,7 +195,7 @@ const LessonDetail = () => {
     if (!window.confirm('Вы уверены, что хотите удалить это слово?')) return;
 
     try {
-      const response = await fetch(`https://localhost:7119/api/words/${wordId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/words/${wordId}`, {
         method: 'DELETE',
       });
 
@@ -200,7 +203,7 @@ const LessonDetail = () => {
 
       setLesson(prev => ({
         ...prev,
-        words: prev.words.filter(word => word.id !== wordId)
+        words: (prev.words || []).filter(word => word.id !== wordId)
       }));
     } catch (error) {
       alert(error.message);
@@ -208,12 +211,14 @@ const LessonDetail = () => {
   };
 
   const openWordEditModal = (word) => {
+    if (!word) return;
+    
     setCurrentWord(word);
     setWordFormData({
-      name: word.name,
-      translation: word.translation,
+      name: word.name || '',
+      translation: word.translation || '',
       imageUrl: word.imageUrl || '',
-      type: 'keyword'
+      type: word.type || 'keyword'
     });
     setWordErrors({
       name: '',
@@ -227,7 +232,7 @@ const LessonDetail = () => {
     if (!validatePhraseForm()) return;
 
     try {
-      const response = await fetch('https://localhost:7119/api/LessonPhrase', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/LessonPhrase`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +248,7 @@ const LessonDetail = () => {
       const newPhrase = await response.json();
       setLesson(prev => ({
         ...prev,
-        phrases: [...prev.phrases, newPhrase]
+        phrases: [...(prev.phrases || []), newPhrase]
       }));
       setShowPhraseAddModal(false);
       setPhraseFormData({
@@ -262,10 +267,10 @@ const LessonDetail = () => {
   };
 
   const handleEditPhrase = async () => {
-    if (!validatePhraseForm()) return;
+    if (!validatePhraseForm() || !currentPhrase?.id) return;
 
     try {
-      const response = await fetch(`https://localhost:7119/api/LessonPhrase`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/LessonPhrase`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -281,7 +286,7 @@ const LessonDetail = () => {
 
       setLesson(prev => ({
         ...prev,
-        phrases: prev.phrases.map(phrase => 
+        phrases: (prev.phrases || []).map(phrase => 
           phrase.id === currentPhrase.id ? { 
             ...phrase, 
             phraseText: phraseFormData.phraseText,
@@ -300,7 +305,7 @@ const LessonDetail = () => {
     if (!window.confirm('Вы уверены, что хотите удалить эту фразу?')) return;
 
     try {
-      const response = await fetch(`https://localhost:7119/api/LessonPhrase/${phraseId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/LessonPhrase/${phraseId}`, {
         method: 'DELETE',
       });
 
@@ -308,7 +313,7 @@ const LessonDetail = () => {
 
       setLesson(prev => ({
         ...prev,
-        phrases: prev.phrases.filter(phrase => phrase.id !== phraseId)
+        phrases: (prev.phrases || []).filter(phrase => phrase.id !== phraseId)
       }));
     } catch (error) {
       alert(error.message);
@@ -316,10 +321,12 @@ const LessonDetail = () => {
   };
 
   const openPhraseEditModal = (phrase) => {
+    if (!phrase) return;
+    
     setCurrentPhrase(phrase);
     setPhraseFormData({
-      phraseText: phrase.phraseText,
-      translation: phrase.translation,
+      phraseText: phrase.phraseText || '',
+      translation: phrase.translation || '',
       imageUrl: phrase.imageUrl || ''
     });
     setPhraseErrors({
@@ -328,6 +335,46 @@ const LessonDetail = () => {
       imageUrl: ''
     });
     setShowPhraseEditModal(true);
+  };
+
+  const handleAddQuiz = (newQuiz) => {
+    setLesson(prev => ({
+      ...prev,
+      quizzes: [...(prev.quizzes || []), newQuiz]
+    }));
+  };
+
+  const handleEditQuiz = (updatedQuiz) => {
+    setLesson(prev => ({
+      ...prev,
+      quizzes: (prev.quizzes || []).map(quiz => 
+        quiz.id === updatedQuiz.id ? updatedQuiz : quiz
+      )
+    }));
+  };
+
+  const handleDeleteQuiz = async (quizId) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот тест?')) return;
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/LessonQuiz/${quizId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Ошибка при удалении теста');
+
+      setLesson(prev => ({
+        ...prev,
+        quizzes: (prev.quizzes || []).filter(quiz => quiz.id !== quizId)
+      }));
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const openQuizEditModal = (quiz) => {
+    setCurrentQuiz(quiz || null);
+    setShowQuizEditModal(true);
   };
 
   const handleWordFormChange = (e) => {
@@ -383,9 +430,11 @@ const LessonDetail = () => {
 
       <header className="lesson-header">
         <div>
-          <h1>{lesson.title}</h1>
+          <h1>{lesson.title || 'Без названия'}</h1>
           <div className="lesson-meta">
-            <Badge bg="secondary">{new Date(lesson.createdAt).toLocaleDateString()}</Badge>
+            <Badge bg="secondary">
+              {lesson.createdAt ? new Date(lesson.createdAt).toLocaleDateString() : 'Дата не указана'}
+            </Badge>
             <Badge bg={lesson.progressPercentage === 100 ? 'success' : 'warning'}>
               {lesson.progressPercentage || 0}% изучено
             </Badge>
@@ -394,34 +443,36 @@ const LessonDetail = () => {
       </header>
 
       <div className="lesson-media">
-        {lesson.videoUrl && lesson.videoUrl.includes('youtu') ? (
-          <div className="lesson-video">
-            <h3>Видео</h3>
-            <YouTube
-              videoId={getYouTubeVideoId(lesson.videoUrl)}
-              opts={{
-                width: '100%',
-                playerVars: {
-                  autoplay: 0,
-                },
-              }}
-            />
-          </div>
-        ) : lesson.videoUrl ? (
-          <div className="lesson-video">
-            <h3>Видео</h3>
-            <video
-              controls
-              width="100%"
-              className="video-player"
-              onError={(e) => {
-                e.target.outerHTML = '<div className="video-error">Не удалось загрузить видео</div>';
-              }}
-            >
-              <source src={lesson.videoUrl} type="video/mp4" />
-              Ваш браузер не поддерживает видео.
-            </video>
-          </div>
+        {lesson.videoUrl ? (
+          getYouTubeVideoId(lesson.videoUrl) ? (
+            <div className="lesson-video">
+              <h3>Видео</h3>
+              <YouTube
+                videoId={getYouTubeVideoId(lesson.videoUrl)}
+                opts={{
+                  width: '100%',
+                  playerVars: {
+                    autoplay: 0,
+                  },
+                }}
+              />
+            </div>
+          ) : (
+            <div className="lesson-video">
+              <h3>Видео</h3>
+              <video
+                controls
+                width="100%"
+                className="video-player"
+                onError={(e) => {
+                  e.target.outerHTML = '<div className="video-error">Не удалось загрузить видео</div>';
+                }}
+              >
+                <source src={lesson.videoUrl} type="video/mp4" />
+                Ваш браузер не поддерживает видео.
+              </video>
+            </div>
+          )
         ) : (
           <Alert variant="info">Видео не доступно</Alert>
         )}
@@ -429,7 +480,7 @@ const LessonDetail = () => {
 
       <Card className="lesson-description">
         <Card.Body>
-          <Card.Text>{lesson.description}</Card.Text>
+          <Card.Text>{lesson.description || 'Описание отсутствует'}</Card.Text>
         </Card.Body>
       </Card>
 
@@ -443,43 +494,73 @@ const LessonDetail = () => {
         setShowPhraseAddModal={setShowPhraseAddModal}
         openPhraseEditModal={openPhraseEditModal}
         handleDeletePhrase={handleDeletePhrase}
+        setShowQuizAddModal={setShowQuizAddModal}
+        openQuizEditModal={openQuizEditModal}
+        handleDeleteQuiz={handleDeleteQuiz}
       />
 
-      <WordAddModal
-        show={showWordAddModal}
-        onHide={() => setShowWordAddModal(false)}
-        formData={wordFormData}
-        errors={wordErrors}
-        handleFormChange={handleWordFormChange}
-        handleAddWord={handleAddWord}
-      />
+      {showWordAddModal && (
+        <WordAddModal
+          show={showWordAddModal}
+          onHide={() => setShowWordAddModal(false)}
+          formData={wordFormData}
+          errors={wordErrors}
+          handleFormChange={handleWordFormChange}
+          handleAddWord={handleAddWord}
+        />
+      )}
 
-      <PhraseAddModal
-        show={showPhraseAddModal}
-        onHide={() => setShowPhraseAddModal(false)}
-        formData={phraseFormData}
-        errors={phraseErrors}
-        handleFormChange={handlePhraseFormChange}
-        handleAddPhrase={handleAddPhrase}
-      />
+      {showPhraseAddModal && (
+        <PhraseAddModal
+          show={showPhraseAddModal}
+          onHide={() => setShowPhraseAddModal(false)}
+          formData={phraseFormData}
+          errors={phraseErrors}
+          handleFormChange={handlePhraseFormChange}
+          handleAddPhrase={handleAddPhrase}
+        />
+      )}
 
-      <WordEditModal
-        show={showWordEditModal}
-        onHide={() => setShowWordEditModal(false)}
-        formData={wordFormData}
-        errors={wordErrors}
-        handleFormChange={handleWordFormChange}
-        handleEditWord={handleEditWord}
-      />
+      {showQuizAddModal && (
+        <QuizAddModal
+          show={showQuizAddModal}
+          onHide={() => setShowQuizAddModal(false)}
+          lessonId={parseInt(id)}
+          onAddQuiz={handleAddQuiz}
+        />
+      )}
 
-      <PhraseEditModal
-        show={showPhraseEditModal}
-        onHide={() => setShowPhraseEditModal(false)}
-        formData={phraseFormData}
-        errors={phraseErrors}
-        handleFormChange={handlePhraseFormChange}
-        handleEditPhrase={handleEditPhrase}
-      />
+      {showWordEditModal && currentWord && (
+        <WordEditModal
+          show={showWordEditModal}
+          onHide={() => setShowWordEditModal(false)}
+          formData={wordFormData}
+          errors={wordErrors}
+          handleFormChange={handleWordFormChange}
+          handleEditWord={handleEditWord}
+        />
+      )}
+
+      {showPhraseEditModal && currentPhrase && (
+        <PhraseEditModal
+          show={showPhraseEditModal}
+          onHide={() => setShowPhraseEditModal(false)}
+          formData={phraseFormData}
+          errors={phraseErrors}
+          handleFormChange={handlePhraseFormChange}
+          handleEditPhrase={handleEditPhrase}
+        />
+      )}
+
+      {showQuizEditModal && currentQuiz && (
+        <QuizEditModal
+          show={showQuizEditModal}
+          onHide={() => setShowQuizEditModal(false)}
+          quiz={currentQuiz}
+          lessonId={parseInt(id)}
+          onEditQuiz={handleEditQuiz}
+        />
+      )}
     </div>
   );
 };

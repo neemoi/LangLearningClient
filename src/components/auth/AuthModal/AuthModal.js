@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button, Spinner } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 import './AuthModal.css';
 
 const AuthModal = ({ show, onHide, onLoginSuccess }) => {
@@ -33,7 +34,7 @@ const AuthModal = ({ show, onHide, onLoginSuccess }) => {
 
     try {
       if (activeTab === 'login') {
-        const response = await fetch('https://localhost:7119/api/auth/login', {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -66,7 +67,7 @@ const AuthModal = ({ show, onHide, onLoginSuccess }) => {
         onLoginSuccess(user);
         onHide();
       } else {
-        const response = await fetch('https://localhost:7119/api/auth/forgot-password', {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/forgot-password`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: resetData.email })

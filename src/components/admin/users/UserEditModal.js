@@ -8,6 +8,7 @@ import {
   Spinner,
   Alert
 } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 
 const UserEditModal = ({ show, user, onClose, onSave, setError }) => {
   const [formData, setFormData] = useState({
@@ -69,8 +70,8 @@ const UserEditModal = ({ show, user, onClose, onSave, setError }) => {
   const checkFieldExists = async (field, value) => {
     try {
       const endpoint = field === 'userName' 
-        ? `https://localhost:7119/api/users/by-username?userName=${encodeURIComponent(value)}`
-        : `https://localhost:7119/api/users/by-email?email=${encodeURIComponent(value)}`;
+        ? `${API_CONFIG.BASE_URL}/api/users/by-username?userName=${encodeURIComponent(value)}`
+        : `${API_CONFIG.BASE_URL}/api/users/by-email?email=${encodeURIComponent(value)}`;
 
       const response = await fetch(endpoint);
       
@@ -116,7 +117,7 @@ const UserEditModal = ({ show, user, onClose, onSave, setError }) => {
         return;
       }
 
-      const response = await fetch(`https://localhost:7119/api/users/${user.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

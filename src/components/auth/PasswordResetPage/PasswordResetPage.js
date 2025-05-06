@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Form, Alert, Spinner, Container, Card, Overlay, Tooltip } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 import './PasswordResetPage.css';
 
 const PasswordResetPage = () => {
@@ -75,7 +76,7 @@ const PasswordResetPage = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:7119/api/auth/reset-password', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

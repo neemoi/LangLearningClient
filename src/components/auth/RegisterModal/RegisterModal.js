@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Button, Spinner } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 import './RegisterModal.css';
 
 const RegisterModal = ({ 
@@ -41,7 +42,7 @@ const RegisterModal = ({
 
   const checkUserExists = async (username, email) => {
     try {
-      const usernameResponse = await fetch(`https://localhost:7119/api/users/by-username?userName=${encodeURIComponent(username)}`, {
+      const usernameResponse = await fetch(`${API_CONFIG.BASE_URL}/api/users/by-username?userName=${encodeURIComponent(username)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         }
@@ -50,7 +51,7 @@ const RegisterModal = ({
         return 'Пользователь с таким именем уже существует';
       }
 
-      const emailResponse = await fetch(`https://localhost:7119/api/users/by-email?email=${encodeURIComponent(email)}`, {
+      const emailResponse = await fetch(`${API_CONFIG.BASE_URL}/api/users/by-email?email=${encodeURIComponent(email)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         }

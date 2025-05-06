@@ -29,6 +29,7 @@ import UserEditModal from './UserEditModal';
 import UserDeleteModal from './UserDeleteModal';
 import UserDetailsModal from './UserDetailsModal';
 import '../users/UserAdmin.css';
+import API_CONFIG from '../../src/config';
 
 const UsersManagement = ({ setError }) => {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ const UsersManagement = ({ setError }) => {
 
   const fetchBlockedUsers = useCallback(async () => {
     try {
-      const response = await fetch('https://localhost:7119/api/users/blocked');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users/blocked`);
       const text = await response.text();
       if (!response.ok) throw new Error('Ошибка загрузки заблокированных пользователей');
       const data = text ? JSON.parse(text) : [];
@@ -72,7 +73,7 @@ const UsersManagement = ({ setError }) => {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://localhost:7119/api/users');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users`);
       const text = await response.text();
       if (!response.ok) throw new Error('Ошибка загрузки пользователей');
       const data = text ? JSON.parse(text) : [];
@@ -96,7 +97,7 @@ const UsersManagement = ({ setError }) => {
   const searchUsers = useCallback(async (query) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://localhost:7119/api/users/by-username?userName=${query}`);
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users/by-username?userName=${query}`);
       const text = await response.text();
       const data = text ? JSON.parse(text) : [];
       const normalized = normalizeUsers(data);
@@ -131,8 +132,8 @@ const UsersManagement = ({ setError }) => {
   const toggleBlockUser = async () => {
     try {
       const endpoint = modalState.actionType === 'block' 
-        ? `https://localhost:7119/api/auth/block/${modalState.selectedUser.id}`
-        : `https://localhost:7119/api/auth/unblock/${modalState.selectedUser.id}`;
+        ? `${API_CONFIG.BASE_URL}/api/auth/block/${modalState.selectedUser.id}`
+        : `${API_CONFIG.BASE_URL}/api/auth/unblock/${modalState.selectedUser.id}`;
 
       const response = await fetch(endpoint, {
         method: 'POST',

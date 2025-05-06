@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import LessonsList from './LessonsList';
 import LessonDetail from './details/LessonDetail';
 import '../lessons/LessonDetail.css';
+import API_CONFIG from '../../src/config';
 
 const LessonsManagement = ({ setError }) => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const LessonsManagement = ({ setError }) => {
     try {
       setLoading(true);
       setLocalError(null);
-      const response = await fetchWithTimeout('https://localhost:7119/api/Lessons', {
+      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -65,7 +66,7 @@ const LessonsManagement = ({ setError }) => {
     try {
       setLoading(true);
       setLocalError(null);
-      const response = await fetchWithTimeout(`https://localhost:7119/api/Lessons/${id}/detail`, {
+      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons/${id}/detail`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'

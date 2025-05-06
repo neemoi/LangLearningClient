@@ -6,6 +6,7 @@ import {
   Spinner, 
   Alert 
 } from 'react-bootstrap';
+import API_CONFIG from '../../src/config';
 
 const UserDeleteModal = ({ show, user, onClose, onDelete, setError }) => {
   const [currentUserId, setCurrentUserId] = useState('');
@@ -23,7 +24,7 @@ const UserDeleteModal = ({ show, user, onClose, onDelete, setError }) => {
       setLocalError(null);
       
       const response = await fetch(
-        `https://localhost:7119/api/users/${user.id}?currentUserId=${currentUserId}`,
+        `${API_CONFIG.BASE_URL}/api/users/${user.id}?currentUserId=${currentUserId}`,
         { 
           method: 'DELETE',
           headers: {

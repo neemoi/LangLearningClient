@@ -12,7 +12,6 @@ const MainPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Функция для проверки авторизации
   const checkAuth = () => {
     const token = localStorage.getItem('userToken');
     const userData = localStorage.getItem('currentUser');
@@ -38,7 +37,7 @@ const MainPage = () => {
     
     if (user) {
       setCurrentUser(user);
-      setSidebarOpen(true); // Убедимся, что сайдбар открыт
+      setSidebarOpen(true);
     } else {
       handleLogout();
     }
@@ -62,7 +61,7 @@ const MainPage = () => {
   const handleLoginSuccess = (userData) => {
     localStorage.setItem('currentUser', JSON.stringify(userData));
     setCurrentUser(userData);
-    setSidebarOpen(true); // Явно открываем сайдбар после авторизации
+    setSidebarOpen(true);
   };
 
   const handleLogout = () => {
