@@ -75,3 +75,198 @@
   .small {
     font-size: 0.875em;
   }
+
+  .quiz-questions {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+  
+  .answer-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .answer-item input {
+    margin-right: 10px;
+  }
+  
+  .correct-answer {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+  }
+.quiz-manager-container .btn-link {
+  color: #000 !important;
+  text-decoration: none !important;
+}
+
+.quiz-manager-container .btn-link:hover {
+  color: #333 !important;
+  text-decoration: underline !important;
+}
+
+.quiz-manager-container .expand-button {
+  color: #ff6b35 !important;
+}
+
+.quiz-manager-container .expand-button:hover {
+  color: #ff8c5a !important;
+}
+
+.quiz-manager-container .nav-link.active {
+  color: #ff6b35 !important;
+  font-weight: bold;
+}
+
+.quiz-manager-container .nav-link:not(.active) {
+  color: #000 !important;
+}
+
+.quiz-manager-container .media-container {
+  margin-bottom: 1.5rem;
+}
+
+.quiz-manager-container .pdf-container iframe {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  background: #f8f9fa;
+}
+
+.quiz-manager-container .video-container {
+  margin-top: 1rem;
+}
+
+.quiz-manager-container .video-container .ratio {
+  background: #000;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.quiz-manager-container .question-card {
+  transition: box-shadow 0.3s ease;
+}
+
+.quiz-manager-container .question-card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.quiz-manager-container .question-type-badge {
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+}
+
+.quiz-manager-container .answers-list .is-correct {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.quiz-manager-container .correct-answer-text {
+  font-weight: 500;
+  color: #198754;
+}
+
+.lesson-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.back-btn-container {
+  margin-bottom: 20px;
+}
+
+.lesson-header {
+  margin-bottom: 30px;
+}
+
+.lesson-header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+.lesson-meta {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.lesson-description {
+  margin-bottom: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lesson-media-container {
+  margin-bottom: 2rem;
+}
+
+.lesson-video {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lesson-video h3 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.video-player {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lesson-pdf {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lesson-pdf h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.pdf-button {
+  padding: 8px 16px;
+  font-size: 1rem;
+}
+
+.lesson-loading,
+.lesson-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .lesson-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .lesson-video h3,
+  .lesson-pdf h3 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .lesson-page {
+    padding: 15px;
+  }
+  
+  .lesson-video,
+  .lesson-pdf {
+    padding: 1rem;
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import Navigation from '../../components/layout/Navigation/Navigation';
 import Sidebar from '../../components/layout/Sidebar/Sidebar';
 import UserDashboard from '../../components/layout/UserDashboard/UserDashboard';
@@ -15,12 +15,12 @@ const MainPage = () => {
   const checkAuth = () => {
     const token = localStorage.getItem('userToken');
     const userData = localStorage.getItem('currentUser');
-    
+
     if (token && userData) {
       try {
         const decoded = jwtDecode(token);
         const user = JSON.parse(userData);
-        
+
         if (decoded.nameid === user.id && decoded.exp * 1000 > Date.now()) {
           return user;
         }
@@ -32,18 +32,21 @@ const MainPage = () => {
   };
 
   useEffect(() => {
-    setIsCheckingAuth(true);
-    const user = checkAuth();
-    
-    if (user) {
-      setCurrentUser(user);
-      setSidebarOpen(true);
-    } else {
-      handleLogout();
-    }
-    
-    setIsCheckingAuth(false);
-    
+    const init = () => {
+      const user = checkAuth();
+
+      if (user) {
+        setCurrentUser(user);
+        setSidebarOpen(true);
+      } else {
+        handleLogout();
+      }
+
+      setIsCheckingAuth(false);
+    };
+
+    init();
+
     const handleStorageChange = () => {
       const user = checkAuth();
       if (user) {
@@ -53,7 +56,7 @@ const MainPage = () => {
         handleLogout();
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -78,10 +81,8 @@ const MainPage = () => {
 
   if (isCheckingAuth) {
     return (
-      <div className="auth-checking">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="auth-checking d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <Spinner animation="border" variant="primary" />
       </div>
     );
   }
@@ -95,7 +96,7 @@ const MainPage = () => {
         onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
       />
-      
+
       {currentUser && <Sidebar isOpen={sidebarOpen} />}
 
       {currentUser && sidebarOpen && window.innerWidth <= 992 && (

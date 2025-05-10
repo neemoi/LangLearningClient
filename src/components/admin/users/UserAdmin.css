@@ -1,417 +1,44 @@
-.admin-app {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f5f7fa;
-  }
-  
-  .admin-content {
-    flex: 1;
-    padding: 2rem 0;
-  }
-  
-  .admin-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e1e5eb;
-  }
-  
-  .admin-header h1 {
-    color: #2c3e50;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-  
-  .admin-subtitle {
-    color: #7f8c8d;
-    font-size: 1rem;
-  }
-  
-  .admin-tabs .nav-link {
-    color: #7f8c8d;
-    font-weight: 500;
-    border: none;
-    padding: 0.75rem 1.25rem;
-    transition: all 0.3s ease;
-  }
-  
-  .admin-tabs .nav-link:hover {
-    color: #000000;
-  }
-  
-  .admin-tabs .nav-link.active {
-    color: #000000;
-    background-color: transparent;
-    border-bottom: 3px solid #000000;
-  }
-  
-  .tab-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .users-management {
-    background-color: white;
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  }
-  
-  .management-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  
-  .management-header h2 {
-    color: #2c3e50;
-    font-size: 1.5rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-  }
-  
-  .header-icon {
-    margin-right: 0.5rem;
-    color: #000000;
-  }
-  
-  .search-refresh {
-    display: flex;
-    gap: 0.75rem;
-  }
-  
-  .search-bar {
-    width: 300px;
-  }
-  
-  .refresh-btn {
-    padding: 0.375rem 0.75rem;
-  }
-  
-  .table-container {
-    overflow-x: auto;
-  }
-  
-  .users-table {
-    margin-bottom: 1rem;
-  }
-  
-  .users-table th {
-    background-color: #f8f9fa;
-    color: #495057;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  
-  .user-id {
-    font-family: 'Courier New', monospace;
-    color: #7f8c8d;
-    font-size: 0.85rem;
-  }
-  
-  .user-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .username {
-    font-weight: 500;
-  }
-  
-  .fullname {
-    font-size: 0.85rem;
-    color: #7f8c8d;
-  }
-  
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    white-space: nowrap;
-  }
-  
-  .action-btn {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border-radius: 50%;
-  }
-  
-  .blocked-user {
-    opacity: 0.8;
-    background-color: rgba(220, 53, 69, 0.05) !important;
-  }
-  
-  .badge-purple {
-    background-color: #000000;
-  }
-  
-  .badge-blue {
-    background-color: #000000;
-  }
-  
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-  }
-  
-  .no-results {
-    text-align: center;
-    padding: 2rem;
-    color: #7f8c8d;
-  }
-  
-  .pagination-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 1.5rem;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .users-table tbody tr {
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  @media (max-width: 992px) {
-    .management-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    
-    .search-refresh {
-      width: 100%;
-    }
-    
-    .search-bar {
-      width: 100%;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .admin-header h1 {
-      font-size: 1.75rem;
-    }
-    
-    .users-table {
-      font-size: 0.9rem;
-    }
-    
-    .actions {
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    
-    .action-btn {
-      width: 30px;
-      height: 30px;
-    }
-  }
+.admin-page-container {
+  margin-left: 250px;
+  margin-top: 50px;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+  width: calc(100% - 250px);
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
 
-  .users-management {
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-  
-  .management-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-  
-  .search-refresh {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .search-bar {
-    width: 300px;
-  }
-  
-  .users-table {
-    margin-bottom: 0;
-  }
-  
-  .users-table th {
-    background-color: #f8f9fa;
-    white-space: nowrap;
-  }
-  
-  .user-id {
-    font-family: monospace;
-  }
-  
-  .user-info {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .username {
-    font-weight: 500;
-  }
-  
-  .fullname {
-    font-size: 0.85rem;
-    color: #6c757d;
-  }
-  
-  .actions {
-    white-space: nowrap;
-  }
-  
-  .action-btn {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  
-  .action-btn:hover {
-    transform: scale(1.05);
-  }
-  
-  .blocked-user {
-    opacity: 0.8;
-    background-color: rgba(220, 53, 69, 0.05);
-  }
-  
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 200px;
-  }
-  
-  .text-truncate {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  @media (max-width: 768px) {
-    .management-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    
-    .search-bar {
-      width: 100%;
-    }
-    
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    
-    .action-btn {
-      width: 32px;
-      height: 32px;
-    }
-  }
+.admin-page-container:not(.sidebar-open) {
+  margin-left: 0;
+  width: 100%;
+}
 
-  .users-table td {
-    padding: 16px 12px; 
-  }
-  
-  .users-table th {
-    padding: 16px 12px;
-  }
+.admin-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
 
-  .action-buttons {
-    gap: 5px; 
-  }
-  
-  .btn-outline-info {
-    color: #6a11cb; 
-    border-color: #6a11cb; 
-  }
-  
-  .btn-outline-info:hover {
-    color: white; 
-    background-color: #6a11cb; 
-    border-color: #6a11cb;
-  }
-
-  .admin-page-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  .admin-page-container {
-    flex: 1;
-    padding: 20px;
-    margin-top: 56px; 
-    transition: margin-left 0.3s ease;
-  }
-  
-  .sidebar-open {
-    margin-left: 250px;
-  }
-  
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1040;
-    display: none;
-  }
-  
-  @media (max-width: 992px) {
-    .sidebar-open {
-      margin-left: 0;
-    }
-    
-    .sidebar-overlay {
-      display: block;
-    }
-  }
-  
-  .admin-content {
-    padding-top: 20px;
-  }
-
+/* Стили для кнопки "Назад" */
 .back-button-container {
   border-bottom: 1px solid #eaeaea;
   padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .back-button {
   color: #000000;
   font-weight: 500;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .back-button:hover {
@@ -427,16 +54,101 @@
   transform: translateX(-3px);
 }
 
-.back-text {
-  position: relative;
-  top: 1px;
+/* Стили для основного контента */
+.users-management {
+  padding: 20px;
+}
+
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.search-refresh {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-bar {
+  width: 300px;
+}
+
+.users-table {
+  margin-bottom: 0;
+}
+
+.users-table th {
+  background-color: #f8f9fa;
+  white-space: nowrap;
+  padding: 16px 12px;
+}
+
+.users-table td {
+  padding: 16px 12px;
+  vertical-align: middle;
+}
+
+.user-id {
+  font-family: monospace;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  font-weight: 500;
+}
+
+.fullname {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+}
+
+.blocked-user {
+  opacity: 0.8;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Адаптивные стили */
+@media (max-width: 992px) {
+  .admin-page-container {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .admin-content {
+    padding: 15px;
+  }
 }
 
 @media (max-width: 768px) {
-  .back-button {
-    font-size: 0.9rem;
-  }
-  
   .back-text {
     display: none;
   }
@@ -445,5 +157,56 @@
     margin-right: 0;
     font-size: 1.2rem;
   }
+  
+  .management-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-refresh {
+    width: 100%;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .search-bar {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+  
+  .users-table th, 
+  .users-table td {
+    padding: 12px 8px;
+    font-size: 0.9rem;
+  }
+  
+  .action-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
 }
 
+@media (max-width: 576px) {
+  .admin-page-container {
+    padding: 10px;
+  }
+  
+  .admin-content {
+    padding: 10px;
+  }
+  
+  .users-table {
+    font-size: 0.8rem;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+  }
+}

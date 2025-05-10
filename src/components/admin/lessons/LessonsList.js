@@ -8,7 +8,6 @@ import {
 import { 
   FaSearch, FaSyncAlt, FaPlus, FaEye, FaEdit, FaTrashAlt, FaArrowLeft
 } from 'react-icons/fa';
-import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import API_CONFIG from '../../src/config';
 
 const PAGE_SIZE = 10;
@@ -33,7 +32,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   const fetchLessons = useCallback(async () => {
     try {
-      setIsLoading(true); 
+      setIsLoading(true);
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons`);
       
       if (!response.ok) {
@@ -57,7 +56,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
   }, [fetchLessons]);
 
   const isValidUrl = (url) => {
-    if (!url) return true;
+    if (!url || url.trim() === '') return true;
     try {
       new URL(url);
       return /^https?:\/\//i.test(url);
@@ -127,10 +126,13 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
     const errors = {};
     
     if (!formData.title.trim()) errors.title = 'Название обязательно';
-    if (formData.videoUrl && !isValidUrl(formData.videoUrl)) {
+    if (!formData.description.trim()) errors.description = 'Описание обязательно';
+    
+    if (formData.videoUrl.trim() !== '' && !isValidUrl(formData.videoUrl)) {
       errors.videoUrl = 'Некорректный URL (должен начинаться с http:// или https://)';
     }
-    if (formData.pdfUrl && !isValidUrl(formData.pdfUrl)) {
+    
+    if (formData.pdfUrl.trim() !== '' && !isValidUrl(formData.pdfUrl)) {
       errors.pdfUrl = 'Некорректный URL (должен начинаться с http:// или https://)';
     }
     
@@ -140,31 +142,44 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   const handleSaveLesson = async () => {
     if (!validateForm()) return;
-
+  
     try {
       const url = currentLesson 
-        ? `${API_CONFIG.BASE_URL}/api/Lessons/${currentLesson.id}`
+        ? `${API_CONFIG.BASE_URL}/api/Lessons`
         : `${API_CONFIG.BASE_URL}/api/Lessons`;
       
-      const method = currentLesson ? 'PUT' : 'POST';
-      const body = currentLesson
-        ? { ...currentLesson, ...formData }
-        : formData;
+      const requestData = {
+        title: formData.title,
+        description: formData.description,
+        ...(formData.videoUrl.trim() && { videoUrl: formData.videoUrl }),
+        ...(formData.pdfUrl.trim() && { pdfUrl: formData.pdfUrl })
+      };
+
+      if (currentLesson) {
+        requestData.id = currentLesson.id;
+      }
+
+      const method = currentLesson ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+        },
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка сервера');
       }
 
       await fetchLessons();
       setShowEditModal(false);
     } catch (err) {
-      setError(err.message || 'Ошибка сохранения урока');
+      setError(`Ошибка: ${err.message}`);
+      console.error("Ошибка запроса:", err);
     }
   };
 
@@ -178,40 +193,48 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   return (
     <Container fluid className="lessons-management px-4 py-5">
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold">
             {currentLesson ? 'Редактирование урока' : 'Создание урока'}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="pt-0">
           <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Название*</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-medium">Название*</Form.Label>
               <Form.Control
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.title}
+                className="py-2"
+                required
               />
               <Form.Control.Feedback type="invalid">
                 {validationErrors.title}
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Описание</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-medium">Описание*</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
+                isInvalid={!!validationErrors.description}
+                className="py-2"
+                required
               />
+              <Form.Control.Feedback type="invalid">
+                {validationErrors.description}
+              </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Ссылка на видео</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-medium">Ссылка на видео</Form.Label>
               <Form.Control
                 type="url"
                 name="videoUrl"
@@ -219,14 +242,16 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                 value={formData.videoUrl}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.videoUrl}
+                className="py-2"
               />
+              <Form.Text className="text-muted">Необязательное поле</Form.Text>
               <Form.Control.Feedback type="invalid">
                 {validationErrors.videoUrl}
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Ссылка на PDF</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label className="fw-medium">Ссылка на PDF</Form.Label>
               <Form.Control
                 type="url"
                 name="pdfUrl"
@@ -234,164 +259,160 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                 value={formData.pdfUrl}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.pdfUrl}
+                className="py-2"
               />
+              <Form.Text className="text-muted">Необязательное поле</Form.Text>
               <Form.Control.Feedback type="invalid">
                 {validationErrors.pdfUrl}
               </Form.Control.Feedback>
             </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="outline-secondary" onClick={() => setShowEditModal(false)}>
             Отмена
           </Button>
-          <Button variant="primary" onClick={handleSaveLesson}>
+          <Button variant="primary" onClick={handleSaveLesson} className="px-4">
             Сохранить
           </Button>
         </Modal.Footer>
       </Modal>
 
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Удаление урока</Modal.Title>
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="fw-bold">Удаление урока</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Вы уверены, что хотите удалить урок <strong>{currentLesson?.title}</strong>?</p>
-          <Alert variant="warning">
+          <p className="mb-3">Вы уверены, что хотите удалить урок <strong>{currentLesson?.title}</strong>?</p>
+          <Alert variant="warning" className="mb-0">
             Это действие нельзя отменить. Все связанные материалы будут удалены.
           </Alert>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+        <Modal.Footer className="border-0">
+          <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>
             Отмена
           </Button>
-          <Button variant="danger" onClick={handleDelete}>
+          <Button variant="danger" onClick={handleDelete} className="px-4">
             Удалить
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Card className="border-0 shadow-sm mb-4">
-        <Card.Body className="p-4">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-            <div>
-              <Button 
-                variant="link" 
-                onClick={() => navigate('/admin')} 
-                className="text-secondary mb-2 p-0 d-flex align-items-center"
-              >
-                <FaArrowLeft className="me-2" /> Назад
-              </Button>
-              <h1 className="h3 mb-0 text-primary">
-                <span className="fw-bold">Управление уроками</span>
-              </h1>
-            </div>
-            
-            <div className="d-flex mt-3 mt-md-0">
-              <OverlayTrigger overlay={<Tooltip>Обновить список</Tooltip>}>
+      <div className="mb-5">
+        <div className="d-flex align-items-center mb-4">
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/admin')} 
+            className="text-muted p-0 d-flex align-items-center me-4"
+          >
+            <FaArrowLeft className="me-2" />
+            <span className="fw-medium">Назад</span>
+          </Button>
+          <h1 className="h3 mb-0 fw-bold">Управление уроками</h1>
+        </div>
+        
+        <Card className="border-0 shadow-sm mb-4">
+          <Card.Body className="p-4">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+              <InputGroup className="flex-grow-1" style={{ maxWidth: '500px' }}>
+                <InputGroup.Text className="bg-white">
+                  <FaSearch className="text-muted" />
+                </InputGroup.Text>
+                <FormControl
+                  placeholder="Поиск по урокам..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="border-start-0"
+                />
+              </InputGroup>
+
+              <div className="d-flex gap-3">
                 <Button 
                   variant="light" 
                   onClick={handleRefresh} 
-                  className="me-2"
+                  className="px-3"
                   disabled={isRefreshing}
                 >
                   <FaSyncAlt className={isRefreshing ? 'spin' : ''} />
                 </Button>
-              </OverlayTrigger>
-              
-              <Button 
-                variant="primary" 
-                onClick={() => prepareEditForm()}
-                className="d-flex align-items-center"
-              >
-                <FaPlus className="me-2" /> Создать урок
-              </Button>
+                
+                <Button 
+                  variant="primary" 
+                  onClick={() => prepareEditForm()}
+                  className="d-flex align-items-center px-4"
+                >
+                  <FaPlus className="me-2" /> Создать урок
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-            <InputGroup className="flex-grow-1" style={{ maxWidth: '500px' }}>
-              <InputGroup.Text>
-                <FaSearch />
-              </InputGroup.Text>
-              <FormControl
-                placeholder="Поиск по урокам..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </InputGroup>
 
             <div className="d-flex gap-2">
-              <Badge bg="light" text="dark" pill className="px-3 py-2">
+              <Badge bg="light" text="dark" className="px-3 py-2 fw-normal">
                 Всего: {lessons.length}
               </Badge>
-              <Badge bg="light" text="dark" pill className="px-3 py-2">
+              <Badge bg="light" text="dark" className="px-3 py-2 fw-normal">
                 Найдено: {filteredLessons.length}
               </Badge>
             </div>
-          </div>
+          </Card.Body>
+        </Card>
 
-          {error && (
-            <Alert variant="danger" dismissible onClose={() => setError('')}>
-              {error}
-            </Alert>
-          )}
-        </Card.Body>
-      </Card>
+        {error && (
+          <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-4">
+            {error}
+          </Alert>
+        )}
 
-      <Card className="border-0 shadow-sm">
-        <div className="table-responsive">
-          <Table hover className="mb-0">
-            <thead className="table-light">
-              <tr>
-                <th width="80">ID</th>
-                <th>Название</th>
-                <th>Описание</th>
-                <th width="150" className="text-center">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentLessons.length > 0 ? (
-                currentLessons.map(lesson => (
-                  <tr key={lesson.id}>
-                    <td className="fw-semibold text-muted">{lesson.id}</td>
-                    <td>
-                      <div className="fw-bold">{lesson.title}</div>
-                      <small className="text-muted">
-                        {new Date(lesson.createdAt).toLocaleDateString()}
-                      </small>
-                    </td>
-                    <td>
-                      <div className="text-truncate" style={{ maxWidth: '300px' }}>
-                        {lesson.description || '-'}
-                      </div>
-                    </td>
-                    <td className="text-center">
-                      <div className="d-flex justify-content-center gap-2">
-                        <OverlayTrigger overlay={<Tooltip>Просмотр</Tooltip>}>
+        <Card className="border-0 shadow-sm">
+          <div className="table-responsive">
+            <Table hover className="mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th width="80" className="ps-4">ID</th>
+                  <th>Название</th>
+                  <th>Описание</th>
+                  <th width="150" className="text-center pe-4">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentLessons.length > 0 ? (
+                  currentLessons.map(lesson => (
+                    <tr key={lesson.id}>
+                      <td className="fw-semibold text-muted ps-4">{lesson.id}</td>
+                      <td>
+                        <div className="fw-bold">{lesson.title}</div>
+                        <small className="text-muted">
+                          {new Date(lesson.createdAt).toLocaleDateString()}
+                        </small>
+                      </td>
+                      <td>
+                        <div className="text-truncate" style={{ maxWidth: '300px' }}>
+                          {lesson.description || '-'}
+                        </div>
+                      </td>
+                      <td className="text-center pe-4">
+                        <div className="d-flex justify-content-center gap-2">
                           <Button
                             variant="outline-primary"
                             size="sm"
                             onClick={() => navigate(`/admin/lessons/${lesson.id}`)}
+                            className="px-2 py-1"
                           >
                             <FaEye />
                           </Button>
-                        </OverlayTrigger>
-                        
-                        <OverlayTrigger overlay={<Tooltip>Редактировать</Tooltip>}>
+                          
                           <Button
                             variant="outline-success"
                             size="sm"
                             onClick={() => prepareEditForm(lesson)}
+                            className="px-2 py-1"
                           >
                             <FaEdit />
                           </Button>
-                        </OverlayTrigger>
-                        
-                        <OverlayTrigger overlay={<Tooltip>Удалить</Tooltip>}>
+                          
                           <Button
                             variant="outline-danger"
                             size="sm"
@@ -399,71 +420,73 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                               setCurrentLesson(lesson);
                               setShowDeleteModal(true);
                             }}
+                            className="px-2 py-1"
                           >
                             <FaTrashAlt />
                           </Button>
-                        </OverlayTrigger>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center py-5">
+                      <div className="text-muted mb-3">
+                        {searchTerm ? 'Ничего не найдено' : 'Нет уроков'}
                       </div>
+                      <Button 
+                        variant="outline-primary" 
+                        size="sm"
+                        onClick={() => prepareEditForm()}
+                        className="px-3"
+                      >
+                        <FaPlus className="me-2" /> Создать урок
+                      </Button>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center py-5">
-                    <div className="text-muted mb-3">
-                      {searchTerm ? 'Ничего не найдено' : 'Нет уроков'}
-                    </div>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => prepareEditForm()}
-                    >
-                      <FaPlus className="me-2" /> Создать урок
-                    </Button>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 border-top">
-            <div className="text-muted small mb-2 mb-md-0">
-              Показано {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filteredLessons.length)} из {filteredLessons.length}
-            </div>
-            <Pagination className="mb-0">
-              <Pagination.Prev 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-              />
-              
-              {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                let page;
-                if (totalPages <= 5) page = i + 1;
-                else if (currentPage <= 3) page = i + 1;
-                else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
-                else page = currentPage - 2 + i;
-                
-                return (
-                  <Pagination.Item
-                    key={page}
-                    active={page === currentPage}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Pagination.Item>
-                );
-              })}
-              
-              <Pagination.Next 
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => p + 1)}
-              />
-            </Pagination>
+                )}
+              </tbody>
+            </Table>
           </div>
-        )}
-      </Card>
+
+          {totalPages > 1 && (
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 border-top">
+              <div className="text-muted small mb-2 mb-md-0">
+                Показано {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filteredLessons.length)} из {filteredLessons.length}
+              </div>
+              <Pagination className="mb-0">
+                <Pagination.Prev 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                />
+                
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                  let page;
+                  if (totalPages <= 5) page = i + 1;
+                  else if (currentPage <= 3) page = i + 1;
+                  else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
+                  else page = currentPage - 2 + i;
+                  
+                  return (
+                    <Pagination.Item
+                      key={page}
+                      active={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Pagination.Item>
+                  );
+                })}
+                
+                <Pagination.Next 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                />
+              </Pagination>
+            </div>
+          )}
+        </Card>
+      </div>
     </Container>
   );
 };

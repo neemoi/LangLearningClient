@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import Sidebar from '../../components/layout/Sidebar/Sidebar';
 import Navigation from '../../components/layout/Navigation/Navigation';
+import './AdminPage.css';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -34,7 +35,9 @@ const AdminPage = () => {
       )}
 
       <div className={`admin-page-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <Outlet />
+        <div className="content-card">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

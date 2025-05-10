@@ -10,6 +10,7 @@ import QuizAddModal from '../quiz/QuizAddModal';
 import QuizEditModal from '../quiz/QuizEditModal';
 import LessonTabs from '../details/LessonTabs';
 import API_CONFIG from '../../../src/config';
+import { FaFilePdf } from 'react-icons/fa';
 import './LessonDetail.css';
 
 const LessonDetail = () => {
@@ -20,6 +21,7 @@ const LessonDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeKey, setActiveKey] = useState('words');
+  const [videoError, setVideoError] = useState(null);
   
   const [showWordAddModal, setShowWordAddModal] = useState(false);
   const [showWordEditModal, setShowWordEditModal] = useState(false);
@@ -53,6 +55,25 @@ const LessonDetail = () => {
   const [showQuizAddModal, setShowQuizAddModal] = useState(false);
   const [showQuizEditModal, setShowQuizEditModal] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState(null);
+
+  useEffect(() => {
+    const fetchLesson = async () => {
+      try {
+        if (!id) throw new Error('ID урока не указан');
+        setLoading(true);
+        const res = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${id}`);
+        if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
+        const data = await res.json();
+        setLesson(data);
+      } catch (err) {
+        setError(err?.message || 'Ошибка при загрузке урока');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLesson();
+  }, [id]);
 
   const validateUrl = (url) => {
     if (!url) return true;
@@ -96,24 +117,62 @@ const LessonDetail = () => {
     return match?.[1] || null;
   };
 
-  useEffect(() => {
-    const fetchLesson = async () => {
-      try {
-        if (!id) throw new Error('ID урока не указан');
-        setLoading(true);
-        const res = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${id}`);
-        if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
-        const data = await res.json();
-        setLesson(data);
-      } catch (err) {
-        setError(err?.message || 'Ошибка при загрузке урока');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const renderMediaContent = () => {
+    return (
+      <div className="lesson-media-container">
+        {lesson?.videoUrl && (
+          <div className="lesson-video mb-4" style={{ height: '500px' }}>
+            <h3>Видео урока</h3>
+            {getYouTubeVideoId(lesson.videoUrl) ? (
+              <YouTube
+                videoId={getYouTubeVideoId(lesson.videoUrl)}
+                opts={{
+                  width: '100%',
+                  height: '450px',
+                  playerVars: {
+                    autoplay: 0,
+                  },
+                }}
+                onError={() => setVideoError('Не удалось загрузить видео')}
+              />
+            ) : (
+              <video
+                controls
+                width="100%"
+                height="450px"
+                onError={() => setVideoError('Не удалось загрузить видео')}
+              >
+                <source src={lesson.videoUrl} type="video/mp4" />
+                Ваш браузер не поддерживает видео.
+              </video>
+            )}
+            {videoError && (
+              <Alert variant="warning" className="mt-2">
+                {videoError}
+              </Alert>
+            )}
+          </div>
+        )}
 
-    fetchLesson();
-  }, [id]);
+        {lesson?.pdfUrl && (
+          <div className="lesson-pdf mb-4">
+            <h3>
+              <FaFilePdf className="me-2" /> Материалы урока
+            </h3>
+            <Button
+              variant="btn btn-outline-secondary"
+              href={lesson.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pdf-button"
+            >
+              Открыть PDF документ
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const handleAddWord = async () => {
     if (!validateWordForm()) return;
@@ -406,7 +465,7 @@ const LessonDetail = () => {
     return (
       <div className="lesson-error">
         <Alert variant="danger">{error}</Alert>
-        <Button variant="outline-primary" onClick={() => navigate(-1)}>Назад</Button>
+        <Button variant="dark" onClick={() => navigate(-1)}>Назад</Button>
       </div>
     );
   }
@@ -415,7 +474,7 @@ const LessonDetail = () => {
     return (
       <div className="lesson-error">
         <Alert variant="warning">Урок не найден</Alert>
-        <Button variant="outline-primary" onClick={() => navigate(-1)}>Назад</Button>
+        <Button variant="dark" onClick={() => navigate(-1)}>Назад</Button>
       </div>
     );
   }
@@ -423,7 +482,7 @@ const LessonDetail = () => {
   return (
     <div className="lesson-page">
       <div className="back-btn-container">
-        <Button variant="outline-secondary" onClick={() => navigate(-1)}>
+        <Button variant="btn btn-outline-secondary" onClick={() => navigate(-1)}>
           ← Назад
         </Button>
       </div>
@@ -442,41 +501,7 @@ const LessonDetail = () => {
         </div>
       </header>
 
-      <div className="lesson-media">
-        {lesson.videoUrl ? (
-          getYouTubeVideoId(lesson.videoUrl) ? (
-            <div className="lesson-video">
-              <h3>Видео</h3>
-              <YouTube
-                videoId={getYouTubeVideoId(lesson.videoUrl)}
-                opts={{
-                  width: '100%',
-                  playerVars: {
-                    autoplay: 0,
-                  },
-                }}
-              />
-            </div>
-          ) : (
-            <div className="lesson-video">
-              <h3>Видео</h3>
-              <video
-                controls
-                width="100%"
-                className="video-player"
-                onError={(e) => {
-                  e.target.outerHTML = '<div className="video-error">Не удалось загрузить видео</div>';
-                }}
-              >
-                <source src={lesson.videoUrl} type="video/mp4" />
-                Ваш браузер не поддерживает видео.
-              </video>
-            </div>
-          )
-        ) : (
-          <Alert variant="info">Видео не доступно</Alert>
-        )}
-      </div>
+      {renderMediaContent()}
 
       <Card className="lesson-description">
         <Card.Body>

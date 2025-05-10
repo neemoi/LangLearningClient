@@ -6,7 +6,7 @@ import AuthModal from '../../auth/AuthModal/AuthModal';
 import RegisterModal from '../../auth/RegisterModal/RegisterModal';
 import './Navigation.css';
 
-const Navigation = ({ onToggleSidebar, isSidebarOpen }) => {
+const Navigation = ({ onToggleSidebar, isSidebarOpen, onLoginSuccess }) => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -19,9 +19,16 @@ const Navigation = ({ onToggleSidebar, isSidebarOpen }) => {
 
   const handleLoginSuccess = (userData) => {
     setCurrentUser(userData);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
     setShowAuthModal(false);
+
     if (!isSidebarOpen) {
       onToggleSidebar();
+    }
+
+    // Передаём данные родительскому компоненту (MainPage)
+    if (onLoginSuccess) {
+      onLoginSuccess(userData);
     }
   };
 
