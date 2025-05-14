@@ -25,6 +25,12 @@ const LessonsManagement = ({ setError }) => {
         signal: controller.signal  
       });
       clearTimeout(id);
+      
+      if (response.status === 500) {
+        console.warn('Server returned 500 error, treating as empty response');
+        return { ok: true, json: async () => [] };
+      }
+      
       return response;
     } catch (err) {
       clearTimeout(id);
@@ -36,26 +42,26 @@ const LessonsManagement = ({ setError }) => {
     try {
       setLoading(true);
       setLocalError(null);
-      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      
       if (!Array.isArray(data)) {
-        throw new Error('Invalid data format received');
+        console.warn('Response data is not an array, setting empty lessons');
+        setLessons([]);
+        return;
       }
       
       setLessons(data);
     } catch (err) {
       console.error('Fetch lessons error:', err);
-      setLocalError(err.message || 'Ошибка загрузки уроков');
+      if (!err.message.includes('500')) {
+        setLocalError(err.message || 'Ошибка загрузки уроков');
+      }
       setLessons([]);
     } finally {
       setLoading(false);
@@ -66,12 +72,13 @@ const LessonsManagement = ({ setError }) => {
     try {
       setLoading(true);
       setLocalError(null);
-      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons/${id}/detail`, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchWithTimeout(`${API_CONFIG.BASE_URL}/api/Lessons/${id}/detail`);
+      
+      if (response.status === 404 || response.status === 500) {
+        console.warn(`Lesson not found (status ${response.status})`);
+        setCurrentLesson(null);
+        return;
+      }
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -79,13 +86,17 @@ const LessonsManagement = ({ setError }) => {
       
       const data = await response.json();
       if (!data || typeof data !== 'object') {
-        throw new Error('Invalid lesson data received');
+        console.warn('Invalid lesson data received');
+        setCurrentLesson(null);
+        return;
       }
       
       setCurrentLesson(data);
     } catch (err) {
       console.error('Fetch lesson details error:', err);
-      setLocalError(err.message || 'Ошибка загрузки деталей урока');
+      if (!err.message.includes('500')) {
+        setLocalError(err.message || 'Ошибка загрузки деталей урока');
+      }
       setCurrentLesson(null);
     } finally {
       setLoading(false);
@@ -123,7 +134,7 @@ const LessonsManagement = ({ setError }) => {
     );
   }
 
-  if (localError && !loading && (!currentLesson || !lessons.length)) {
+  if (localError && !loading && localError !== '500' && (!currentLesson || !lessons.length)) {
     return (
       <div className="error-container">
         <div className="alert alert-danger">
@@ -173,6 +184,7 @@ const LessonsManagement = ({ setError }) => {
       error={localError}
       setError={setLocalError}
       refreshData={fetchLessons}
+      isLoading={loading}
     />
   );
 };

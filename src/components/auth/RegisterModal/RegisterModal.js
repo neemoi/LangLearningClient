@@ -106,7 +106,7 @@ const RegisterModal = ({
         return;
       }
 
-      const response = await fetch('https://localhost:7119/api/auth/register', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,15 +126,12 @@ const RegisterModal = ({
         throw new Error(errorData.message || 'Ошибка регистрации');
       }
 
-      // Вызываем колбэк только если он существует
       if (typeof onRegisterSuccess === 'function') {
         onRegisterSuccess();
       }
       
-      // Закрываем модальное окно после успешной регистрации
       onHide();
       
-      // Сбрасываем форму
       setRegisterData({
         userName: '', 
         email: '', 

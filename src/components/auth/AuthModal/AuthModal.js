@@ -42,7 +42,7 @@ const AuthModal = ({ show, onHide, onLoginSuccess }) => {
             password: loginData.password
           })
         });
-
+        
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
           throw new Error(errorData?.message || 'Неверный email или пароль');

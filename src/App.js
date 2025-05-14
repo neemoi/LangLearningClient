@@ -11,6 +11,8 @@ import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import UsersManagement from './components/admin/users/UsersManagement';
 import LessonsManagement from './components/admin/lessons/LessonsManagement';
 import LessonDetail from './components/admin/lessons/details/LessonDetail';
+import AlphabetLettersManagement from './components/admin/alphabet/AlphabetLettersManagement';
+import FunctionsManagement from './components/admin/function/FunctionManagement';
 
 function App() {
   return (
@@ -24,7 +26,10 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="lessons" element={<LessonsManagement />} />
-          <Route path="/admin/lessons/:id" element={<LessonDetail />} />
+          <Route path="lessons/:id" element={<LessonDetail />} />
+          <Route path="alphabet" element={<AlphabetLettersManagement />} />
+          <Route path="functions" element={<FunctionsManagement />} />
+          <Route path="functions/:functionId" element={<FunctionsManagement />} />
         </Route>
       </Routes>
     </div>

@@ -4,6 +4,7 @@ import { Container, Button, Alert, Spinner } from 'react-bootstrap';
 import { ProfileEdit, ProfileView } from '../../components/userprofile';
 import Navigation from '../../components/layout/Navigation/Navigation';
 import Sidebar from '../../components/layout/Sidebar/Sidebar';
+import API_CONFIG from '../../components/src/config';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
@@ -31,7 +32,7 @@ const ProfilePage = () => {
       }
 
       try {
-        const response = await fetch(`https://localhost:7119/api/users/${userId}`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/users/${userId}`, {
           headers: {
             'Authorization': `Bearer ${userToken}`,
             'Content-Type': 'application/json',

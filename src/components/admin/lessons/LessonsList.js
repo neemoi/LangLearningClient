@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { 
   Table, Pagination, InputGroup, FormControl, Button,
@@ -12,12 +11,18 @@ import API_CONFIG from '../../src/config';
 
 const PAGE_SIZE = 10;
 
-const LessonsList = ({ error = '', setError = () => {} }) => {
-  const [lessons, setLessons] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+const LessonsList = ({ 
+  lessons = [], 
+  searchTerm = '', 
+  setSearchTerm = () => {}, 
+  currentPage = 1, 
+  setCurrentPage = () => {}, 
+  navigate, 
+  error = '', 
+  setError = () => {}, 
+  refreshData = () => {},
+  isLoading = false
+}) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
@@ -28,42 +33,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
     pdfUrl: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
-  const navigate = useNavigate();
-
-  const fetchLessons = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/Lessons`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setLessons(data);
-      setError('');
-    } catch (err) {
-      setError(err.message);
-      console.error('Ошибка загрузки уроков:', err);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [setError]);
-
-  useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
-
-  const isValidUrl = (url) => {
-    if (!url || url.trim() === '') return true;
-    try {
-      new URL(url);
-      return /^https?:\/\//i.test(url);
-    } catch {
-      return false;
-    }
-  };
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { filteredLessons, currentLessons, totalPages } = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -84,7 +54,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    fetchLessons();
+    refreshData().finally(() => setIsRefreshing(false));
   };
 
   const handleDelete = async () => {
@@ -98,7 +68,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
       }
       
       setShowDeleteModal(false);
-      await fetchLessons();
+      await refreshData();
     } catch (err) {
       setError(err.message || 'Ошибка удаления урока');
     }
@@ -120,6 +90,16 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setValidationErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const isValidUrl = (url) => {
+    if (!url || url.trim() === '') return true;
+    try {
+      new URL(url);
+      return /^https?:\/\//i.test(url);
+    } catch {
+      return false;
+    }
   };
 
   const validateForm = () => {
@@ -175,21 +155,13 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
         throw new Error(errorData.message || 'Ошибка сервера');
       }
 
-      await fetchLessons();
+      await refreshData();
       setShowEditModal(false);
     } catch (err) {
       setError(`Ошибка: ${err.message}`);
       console.error("Ошибка запроса:", err);
     }
   };
-
-  if (isLoading) {
-    return (
-      <Container fluid className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
-        <Spinner animation="border" variant="primary" />
-      </Container>
-    );
-  }
 
   return (
     <Container fluid className="lessons-management px-4 py-5">
@@ -378,7 +350,13 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                 </tr>
               </thead>
               <tbody>
-                {currentLessons.length > 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="4" className="text-center py-4">
+                      <Spinner animation="border" variant="primary" />
+                    </td>
+                  </tr>
+                ) : currentLessons.length > 0 ? (
                   currentLessons.map(lesson => (
                     <tr key={lesson.id}>
                       <td className="fw-semibold text-muted ps-4">{lesson.id}</td>
@@ -430,9 +408,9 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center py-5">
+                    <td colSpan="4" className="text-center py-5">
                       <div className="text-muted mb-3">
-                        {searchTerm ? 'Ничего не найдено' : 'Нет уроков'}
+                        {searchTerm ? 'Ничего не найдено по вашему запросу' : 'Уроки не найдены'}
                       </div>
                       <Button 
                         variant="outline-primary" 
@@ -440,7 +418,7 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
                         onClick={() => prepareEditForm()}
                         className="px-3"
                       >
-                        <FaPlus className="me-2" /> Создать урок
+                        <FaPlus className="me-2" /> Создать первый урок
                       </Button>
                     </td>
                   </tr>
@@ -492,12 +470,27 @@ const LessonsList = ({ error = '', setError = () => {} }) => {
 };
 
 LessonsList.propTypes = {
+  lessons: PropTypes.array.isRequired,
+  searchTerm: PropTypes.string,
+  setSearchTerm: PropTypes.func,
+  currentPage: PropTypes.number,
+  setCurrentPage: PropTypes.func,
+  navigate: PropTypes.func.isRequired,
   error: PropTypes.string,
-  setError: PropTypes.func.isRequired
+  setError: PropTypes.func,
+  refreshData: PropTypes.func,
+  isLoading: PropTypes.bool
 };
 
 LessonsList.defaultProps = {
-  error: ''
+  searchTerm: '',
+  setSearchTerm: () => {},
+  currentPage: 1,
+  setCurrentPage: () => {},
+  error: '',
+  setError: () => {},
+  refreshData: () => {},
+  isLoading: false
 };
 
 export default LessonsList;

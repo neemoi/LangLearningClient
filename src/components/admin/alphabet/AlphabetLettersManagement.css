@@ -1,0 +1,106 @@
+.letters-management .table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+  }
+  
+  .words-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .word-image-preview {
+    max-width: 100px;
+    max-height: 100px;
+    display: block;
+    margin: 5px 0;
+  }
+  
+  .words-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+  
+  .add-word-form {
+    margin-top: 20px;
+  }
+  
+  a {
+    color: black !important;
+    text-decoration: none !important;
+  }
+  
+  a:hover {
+    text-decoration: underline !important;
+  }
+  
+  .words-modal {
+    top: 30px;
+  }
+  
+  .modal-header {
+    padding: 12px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .modal-body-content {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    max-height: 75vh;
+  }
+  
+  .words-table-section {
+    flex: 1;
+    padding: 15px 20px;
+    overflow-y: auto;
+  }
+  
+  .table-wrapper {
+    max-height: 50vh;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+  }
+  
+  .words-table {
+    margin-bottom: 0;
+  }
+  
+  .words-table thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+  }
+  
+  .add-form-section {
+    padding: 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  .text-dark {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+  
+  .text-dark:hover {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+  
+  @media (max-height: 700px) {
+    .words-modal {
+      top: 15px;
+    }
+    
+    .modal-body-content {
+      max-height: 80vh;
+    }
+    
+    .table-wrapper {
+      max-height: 55vh;
+    }
+  }

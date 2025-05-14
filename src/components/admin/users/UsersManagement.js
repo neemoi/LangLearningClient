@@ -41,7 +41,7 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [localError, setLocalError] = useState(null);
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
   
   const [modalState, setModalState] = useState({
     showConfirm: false,
@@ -53,30 +53,52 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
     actionType: ''
   });
 
-  const normalizeUsers = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (data.id) return [data];
-    return [];
-  };
-
-  const fetchUsers = useCallback(async () => {
+  const safeFetch = async (url, options = {}) => {
     try {
-      setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users`, {
+      const response = await fetch(url, {
+        ...options,
         headers: {
+          ...options.headers,
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         }
       });
-      
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP error! status: ${response.status}`);
+      }
+
       const text = await response.text();
-      if (!response.ok) throw new Error('Ошибка загрузки пользователей');
+      return text ? JSON.parse(text) : null;
+    } catch (error) {
+      console.error(`Fetch error for ${url}:`, error);
+      throw error;
+    }
+  };
+
+  const fetchUsersWithBlockStatus = useCallback(async () => {
+    try {
+      setLoading(true);
+      setLocalError(null);
       
-      const data = text ? JSON.parse(text) : [];
-      setUsers(normalizeUsers(data));
+      const [usersData, blockedUsers] = await Promise.all([
+        safeFetch(`${API_CONFIG.BASE_URL}/api/users`).catch(() => []),
+        safeFetch(`${API_CONFIG.BASE_URL}/api/users/blocked`).catch(() => [])
+      ]);
+
+      const blockedIds = new Set((blockedUsers || []).map(user => user.id));
+      
+      const mergedUsers = Array.isArray(usersData) 
+        ? usersData.map(user => ({
+            ...user,
+            isBlocked: blockedIds.has(user.id)
+          }))
+        : [];
+      
+      setUsers(mergedUsers);
     } catch (err) {
       console.error('Fetch users error:', err);
-      setLocalError(err.message);
+      setLocalError(err.message || 'Ошибка загрузки пользователей');
       setUsers([]);
     } finally {
       setLoading(false);
@@ -87,31 +109,50 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
   const searchUsers = useCallback(async (query) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/users/by-username?userName=${query}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        }
-      });
       
-      const text = await response.text();
-      const data = text ? JSON.parse(text) : [];
-      setUsers(normalizeUsers(data));
+      let result = null;
+      try {
+        if (query.includes('@')) {
+          result = await safeFetch(`${API_CONFIG.BASE_URL}/api/users/by-email?email=${encodeURIComponent(query)}`);
+        } else {
+          result = await safeFetch(`${API_CONFIG.BASE_URL}/api/users/by-username?userName=${encodeURIComponent(query)}`);
+        }
+      } catch (searchError) {
+        console.error('Search error:', searchError);
+      }
+
+      if (result) {
+        try {
+          const blockedUsers = await safeFetch(`${API_CONFIG.BASE_URL}/api/users/blocked`).catch(() => []);
+          const isBlocked = (blockedUsers || []).some(u => u.id === result.id);
+          setUsers([{ ...result, isBlocked }]);
+        } catch (blockedErr) {
+          console.error('Blocked status check error:', blockedErr);
+          setUsers([result]);
+        }
+      } else {
+        setUsers([]);
+      }
     } catch (err) {
       console.error('Search users error:', err);
-      setLocalError(err.message);
+      setLocalError(err.message || 'Ошибка поиска пользователей');
       setUsers([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { 
-    if (searchTerm.length > 2) {
-      searchUsers(searchTerm);
-    } else {
-      fetchUsers();
-    }
-  }, [searchTerm, fetchUsers, searchUsers]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim().length > 0) {
+        searchUsers(searchTerm);
+      } else {
+        fetchUsersWithBlockStatus();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, fetchUsersWithBlockStatus, searchUsers]);
 
   const toggleBlockUser = async () => {
     try {
@@ -119,33 +160,41 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
         ? `${API_CONFIG.BASE_URL}/api/auth/block/${modalState.selectedUser.id}`
         : `${API_CONFIG.BASE_URL}/api/auth/unblock/${modalState.selectedUser.id}`;
 
-      const response = await fetch(endpoint, {
+      const updatedUser = await safeFetch(endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          'Content-Type': 'application/json'
         }
       });
 
-      if (!response.ok) throw new Error('Ошибка выполнения операции');
-      
-      await fetchUsers();
+      if (updatedUser) {
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === updatedUser.id ? { ...user, isBlocked: updatedUser.isBlocked } : user
+          )
+        );
+      } else {
+        await fetchUsersWithBlockStatus();
+      }
+
       setModalState(prev => ({ ...prev, showConfirm: false }));
     } catch (err) {
       console.error('Toggle block error:', err);
-      setLocalError(err.message);
+      setLocalError(err.message || 'Ошибка при изменении статуса блокировки');
+      await fetchUsersWithBlockStatus();
     }
   };
 
   const { filteredUsers, currentUsers, totalPages } = useMemo(() => {
     const term = searchTerm.toLowerCase();
     const filtered = users.filter(user => {
-      const userName = user.userName || '';
-      const email = user.email || '';
-      return (
-        userName.toLowerCase().includes(term) ||
-        email.toLowerCase().includes(term)
-      );
+      const fields = [
+        user.userName || '',
+        user.email || '',
+        user.firstName || '',
+        user.lastName || ''
+      ];
+      return fields.some(field => field.toLowerCase().includes(term));
     });
     
     const indexOfLast = currentPage * usersPerPage;
@@ -172,15 +221,22 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    fetchUsers();
+    fetchUsersWithBlockStatus();
   };
 
-  const handleRegisterSuccess = (newUser) => {
-    setUsers([...users, newUser]);
-    setModalState(prev => ({ ...prev, showRegister: false }));
+  const handleRegisterSuccess = async () => {
+    try {
+      setModalState(prev => ({ ...prev, showRegister: false }));
+      await fetchUsersWithBlockStatus();
+      setSearchTerm('');
+      setCurrentPage(1);
+    } catch (err) {
+      console.error('Error after registration:', err);
+      setLocalError('Ошибка при обновлении списка пользователей');
+    }
   };
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <Container fluid className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
         <Spinner animation="border" variant="primary" />
@@ -190,7 +246,11 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
 
   return (
     <Container fluid className="users-management px-4 py-5">
-      <Modal show={modalState.showConfirm} onHide={() => setModalState(prev => ({ ...prev, showConfirm: false }))} centered>
+      <Modal 
+        show={modalState.showConfirm} 
+        onHide={() => setModalState(prev => ({ ...prev, showConfirm: false }))} 
+        centered
+      >
         <Modal.Header closeButton className="border-0">
           <Modal.Title className="fw-bold">
             {modalState.actionType === 'block' ? 'Блокировка пользователя' : 'Разблокировка пользователя'}
@@ -208,7 +268,10 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
           )}
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button variant="outline-secondary" onClick={() => setModalState(prev => ({ ...prev, showConfirm: false }))}>
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setModalState(prev => ({ ...prev, showConfirm: false }))}
+          >
             Отмена
           </Button>
           <Button 
@@ -231,7 +294,7 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
         show={modalState.showEdit}
         user={modalState.selectedUser}
         onClose={() => setModalState(prev => ({ ...prev, showEdit: false }))}
-        onSave={fetchUsers}
+        onSave={fetchUsersWithBlockStatus}
         setError={setLocalError}
       />
 
@@ -239,7 +302,7 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
         show={modalState.showDelete}
         user={modalState.selectedUser}
         onClose={() => setModalState(prev => ({ ...prev, showDelete: false }))}
-        onDelete={fetchUsers}
+        onDelete={fetchUsersWithBlockStatus}
         setError={setLocalError}
       />
 
@@ -272,14 +335,22 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
                   <FaSearch className="text-muted" />
                 </InputGroup.Text>
                 <FormControl
-                  placeholder="Поиск по имени или email"
+                  placeholder="Поиск по имени, email или логину"
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="border-start-0"
                 />
+                {searchTerm && (
+                  <Button 
+                    variant="outline-secondary" 
+                    onClick={() => {
+                      setSearchTerm('');
+                      fetchUsersWithBlockStatus();
+                    }}
+                  >
+                    Очистить
+                  </Button>
+                )}
               </InputGroup>
 
               <div className="d-flex gap-3">
@@ -311,6 +382,25 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
               <Badge bg="light" text="dark" className="px-3 py-2 fw-normal">
                 Найдено: {filteredUsers.length}
               </Badge>
+              <Button 
+                variant="outline-info" 
+                size="sm" 
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const blockedUsers = await safeFetch(`${API_CONFIG.BASE_URL}/api/users/blocked`);
+                    setUsers((blockedUsers || []).map(user => ({ ...user, isBlocked: true })));
+                    setSearchTerm('');
+                  } catch (err) {
+                    console.error('Failed to load blocked users:', err);
+                    setLocalError(err.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Показать заблокированных
+              </Button>
             </div>
           </Card.Body>
         </Card>
@@ -347,15 +437,17 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
                       </td>
                       <td className="align-middle">
                         <div className="user-info">
-                          <div className="fw-bold username">{user.userName || '-'}</div>
-                          {user.firstName && user.lastName && (
-                            <div className="text-muted small fullname">{user.firstName} {user.lastName}</div>
+                          <div className="fw-bold username">{user.userName}</div>
+                          {(user.firstName || user.lastName) && (
+                            <div className="text-muted small fullname">
+                              {user.firstName} {user.lastName}
+                            </div>
                           )}
                         </div>
                       </td>
                       <td className="align-middle">
                         <div className="text-truncate" style={{ maxWidth: '200px' }}>
-                          {user.email || '-'}
+                          {user.email}
                         </div>
                       </td>
                       <td className="align-middle">
@@ -417,7 +509,7 @@ const UsersManagement = ({ error = '', setError = () => {} }) => {
                   <tr>
                     <td colSpan="5" className="text-center py-5">
                       <div className="text-muted mb-3">
-                        {searchTerm ? 'Ничего не найдено' : 'Нет пользователей'}
+                        {searchTerm ? 'Ничего не найдено по вашему запросу' : 'Нет пользователей'}
                       </div>
                       {currentUser?.role === 'Admin' && (
                         <Button 
