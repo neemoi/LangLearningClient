@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -13,6 +12,7 @@ import LessonsManagement from './components/admin/lessons/LessonsManagement';
 import LessonDetail from './components/admin/lessons/details/LessonDetail';
 import AlphabetLettersManagement from './components/admin/alphabet/AlphabetLettersManagement';
 import FunctionsManagement from './components/admin/function/FunctionManagement';
+import PronunciationManagement from './components/admin/pronunciation/PronunciationManagement'; 
 
 function App() {
   return (
@@ -30,6 +30,7 @@ function App() {
           <Route path="alphabet" element={<AlphabetLettersManagement />} />
           <Route path="functions" element={<FunctionsManagement />} />
           <Route path="functions/:functionId" element={<FunctionsManagement />} />
+          <Route path="pronunciation" element={<PronunciationManagement />} />
         </Route>
       </Routes>
     </div>

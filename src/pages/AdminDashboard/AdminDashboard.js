@@ -4,7 +4,8 @@ import {
   FaUsers, 
   FaBook, 
   FaFont,
-  FaCogs
+  FaCogs,
+  FaVolumeUp
 } from 'react-icons/fa';
 import './AdminDashboard.css';
 
@@ -50,6 +51,16 @@ const AdminDashboard = () => {
           <div className="card-content">
             <h2>Функции (Грамматические разделы)</h2>
             <p>Управление грамматическими разделами</p>
+          </div>
+        </Link>
+
+        <Link to="/admin/pronunciation" className="dashboard-card">
+          <div className="card-icon bg-danger">
+            <FaVolumeUp size={24} />
+          </div>
+          <div className="card-content">
+            <h2>Управление произношением</h2>
+            <p>Категории и слова для тренировки произношения</p>
           </div>
         </Link>
       </div>

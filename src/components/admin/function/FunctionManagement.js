@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import { 
   FaSearch, FaSyncAlt, FaPlus, FaEdit, FaTrashAlt, 
-  FaArrowLeft, FaList
+  FaArrowLeft, FaList, FaTimes
 } from 'react-icons/fa';
 import API_CONFIG from '../../src/config';
 import './FunctionManagement.css';
@@ -22,13 +22,15 @@ const PartsOfSpeechManagement = () => {
 
   const [showWordsModal, setShowWordsModal] = useState(false);
   const [selectedPart, setSelectedPart] = useState(null);
+  const [wordsLoading, setWordsLoading] = useState(false);
 
   const fetchParts = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/PartOfSpeech`);
       if (!response.ok) throw new Error('Ошибка загрузки частей речи');
-      setParts(await response.json());
+      const data = await response.json();
+      setParts(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -52,7 +54,7 @@ const PartsOfSpeechManagement = () => {
     setShowPartModal(true);
   };
 
- const handleSavePart = async (partData) => {
+  const handleSavePart = async (partData) => {
     try {
       const url = `${API_CONFIG.BASE_URL}/api/PartOfSpeech`;
       const method = modalAction === 'add' ? 'POST' : 'PUT';
@@ -127,6 +129,7 @@ const PartsOfSpeechManagement = () => {
         show={showWordsModal}
         partOfSpeech={selectedPart}
         onHide={() => setShowWordsModal(false)}
+        onWordsUpdated={fetchParts}
       />
 
       <div className="mb-5">
@@ -359,14 +362,15 @@ const PartOfSpeechModal = ({ show, part, onHide, onSave, action, existingParts }
   );
 };
 
-const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
+const FunctionWordsModal = ({ show, partOfSpeech, onHide, onWordsUpdated }) => {
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [editWord, setEditWord] = useState(null);
   const [editForm, setEditForm] = useState({
     id: 0,
-    word: ''
+    name: '',
+    translation: ''
   });
   const [errors, setErrors] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
@@ -375,6 +379,7 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
     translation: '',
     partOfSpeechId: 0
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (show && partOfSpeech) {
@@ -386,9 +391,20 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
   const fetchWords = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/Language/function-word?partOfSpeechId=${partOfSpeech?.id}`);
+      setError('');
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/PartOfSpeech/${partOfSpeech?.id}/words`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+          }
+        }
+      );
+      
       if (!response.ok) throw new Error('Ошибка загрузки слов');
-      setWords(await response.json());
+      
+      const data = await response.json();
+      setWords(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -396,10 +412,16 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
     }
   };
 
+  const filteredWords = words.filter(word => 
+    word.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (word.translation && word.translation.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   const handleDeleteWord = async (id) => {
     if (!window.confirm('Вы уверены, что хотите удалить это слово?')) return;
     
     try {
+      setLoading(true);
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/Language/function-word/${id}`, {
         method: 'DELETE',
         headers: {
@@ -408,9 +430,13 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
       });
 
       if (!response.ok) throw new Error('Ошибка удаления слова');
+      
       await fetchWords();
+      onWordsUpdated && onWordsUpdated();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -418,15 +444,18 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
     setEditWord(word);
     setEditForm({
       id: word.id,
-      word: word.name
+      name: word.name,
+      translation: word.translation || ''
     });
+    setErrors({});
   };
 
   const handleCancelEdit = () => {
     setEditWord(null);
     setEditForm({
       id: 0,
-      word: ''
+      name: '',
+      translation: ''
     });
     setErrors({});
   };
@@ -434,9 +463,8 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
   const validateEditForm = () => {
     const newErrors = {};
     
-    if (!editForm.word.trim()) {
-      newErrors.word = 'Слово обязательно';
-    }
+    if (!editForm.name.trim()) newErrors.name = 'Слово обязательно';
+    if (!editForm.translation.trim()) newErrors.translation = 'Перевод обязателен';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -453,12 +481,21 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('userToken')}`
         },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify({
+          id: editForm.id,
+          name: editForm.name,
+          translation: editForm.translation,
+          partOfSpeechId: partOfSpeech.id
+        })
       });
 
-      if (!response.ok) throw new Error('Ошибка обновления слова');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка обновления слова');
+      }
       
       await fetchWords();
+      onWordsUpdated && onWordsUpdated();
       handleCancelEdit();
     } catch (err) {
       setError(err.message);
@@ -467,101 +504,156 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
     }
   };
 
-  const handleAddWord = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/Language/function-word`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
-        },
-        body: JSON.stringify(addForm)
-      });
-
-      if (!response.ok) throw new Error('Ошибка добавления слова');
-      
-      await fetchWords();
-      setShowAddModal(false);
-      setAddForm({
-        name: '',
-        translation: '',
-        partOfSpeechId: partOfSpeech.id
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+ const handleAddWord = async () => {
+  try {
+    if (!addForm.name.trim() || !addForm.translation.trim()) {
+      setError('Заполните все обязательные поля');
+      return;
     }
-  };
+
+    setLoading(true);
+    const response = await fetch(`${API_CONFIG.BASE_URL}/api/Language/function-word`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+      },
+      body: JSON.stringify({
+        name: addForm.name,
+        translation: addForm.translation,
+        partOfSpeechId: partOfSpeech.id
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Ошибка добавления слова');
+    }
+    
+    await fetchWords();
+    onWordsUpdated && onWordsUpdated();
+    setShowAddModal(false);
+    setAddForm({
+      name: '',
+      translation: '',
+      partOfSpeechId: partOfSpeech.id
+    });
+    setError('');
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered className="words-modal">
+    <Modal show={show} onHide={onHide} size="xl" centered className="words-modal">
       <Modal.Header closeButton className="modal-header">
-        <Modal.Title>Функциональные слова: {partOfSpeech?.name}</Modal.Title>
+        <Modal.Title>
+          Функциональные слова: <span className="text-primary">{partOfSpeech?.name}</span>
+        </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="modal-body-content p-0">
+      <Modal.Body>
         {error && (
-          <Alert variant="danger" dismissible onClose={() => setError('')} className="m-3">
+          <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-3">
             {error}
           </Alert>
         )}
 
-        <div className="d-flex justify-content-between p-3 border-bottom">
-          <Button 
-            variant="primary" 
-            onClick={() => setShowAddModal(true)}
-            className="d-flex align-items-center"
-          >
-            <FaPlus className="me-2" /> Добавить слово
-          </Button>
-          <Button 
-            variant="light" 
-            onClick={fetchWords}
-            className="d-flex align-items-center"
-          >
-            <FaSyncAlt className="me-2" /> Обновить
-          </Button>
+        <div className="d-flex justify-content-between mb-3">
+          <InputGroup style={{ maxWidth: '400px' }}>
+            <InputGroup.Text>
+              <FaSearch />
+            </InputGroup.Text>
+            <FormControl
+              placeholder="Поиск по словам или переводам"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </InputGroup>
+
+          <div className="d-flex gap-2">
+            <Button 
+              variant="light" 
+              onClick={fetchWords} 
+              disabled={loading}
+            >
+              <FaSyncAlt className={loading ? "spin" : ""} />
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={() => setShowAddModal(true)}
+              disabled={loading}
+            >
+              <FaPlus className="me-2" /> Добавить слово
+            </Button>
+          </div>
         </div>
 
-        <div className="words-table-section">
+        <div className="table-responsive">
           {loading ? (
             <div className="text-center py-5">
               <Spinner animation="border" variant="primary" />
+              <div className="mt-2">Загрузка слов...</div>
             </div>
-          ) : words.length > 0 ? (
-            <div className="table-wrapper">
-              <Table striped bordered hover className="words-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Слово</th>
-                    <th>Перевод</th>
-                    <th width="100">Действия</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {words.map(word => (
-                    <tr key={word.id}>
-                      <td>{word.id}</td>
-                      <td>
-                        {editWord?.id === word.id ? (
+          ) : words.length === 0 ? (
+            <div className="text-center py-5">
+              <div className="text-muted mb-3">Нет слов для этой части речи</div>
+            </div>
+          ) : filteredWords.length > 0 ? (
+            <Table hover className="mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th width="80">ID</th>
+                  <th>Слово</th>
+                  <th>Перевод</th>
+                  <th width="150" className="text-center">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredWords.map(word => (
+                  <tr key={word.id}>
+                    <td className="align-middle">{word.id}</td>
+                    <td className="align-middle fw-semibold">
+                      {editWord?.id === word.id ? (
+                        <>
                           <Form.Control
                             type="text"
-                            value={editForm.word}
-                            onChange={(e) => setEditForm({...editForm, word: e.target.value})}
-                            isInvalid={!!errors.word}
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                            isInvalid={!!errors.name}
                           />
-                        ) : (
-                          word.name
-                        )}
-                      </td>
-                      <td>{word.translation}</td>
-                      <td>
+                          {errors.name && (
+                            <Form.Text className="text-danger">{errors.name}</Form.Text>
+                          )}
+                        </>
+                      ) : (
+                        word.name
+                      )}
+                    </td>
+                    <td className="align-middle">
+                      {editWord?.id === word.id ? (
+                        <>
+                          <Form.Control
+                            type="text"
+                            value={editForm.translation}
+                            onChange={(e) => setEditForm({...editForm, translation: e.target.value})}
+                            isInvalid={!!errors.translation}
+                          />
+                          {errors.translation && (
+                            <Form.Text className="text-danger">{errors.translation}</Form.Text>
+                          )}
+                        </>
+                      ) : (
+                        word.translation
+                      )}
+                    </td>
+                    <td className="align-middle">
+                      <div className="d-flex justify-content-center gap-2">
                         {editWord?.id === word.id ? (
-                          <div className="d-flex gap-2">
+                          <>
                             <Button
-                              variant="btn btn-outline-secondary"
+                              variant="success"
                               size="sm"
                               onClick={handleSaveEdit}
                               disabled={loading}
@@ -569,76 +661,86 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
                               Сохранить
                             </Button>
                             <Button
-                              variant="btn btn-outline-secondary"
+                              variant="outline-secondary"
                               size="sm"
                               onClick={handleCancelEdit}
                               disabled={loading}
                             >
                               Отмена
                             </Button>
-                          </div>
+                          </>
                         ) : (
-                          <div className="d-flex gap-2">
+                          <>
                             <Button
-                              variant="btn btn-outline-secondary"
+                              variant="outline-primary"
                               size="sm"
                               onClick={() => handleEditWord(word)}
                               disabled={loading}
+                              title="Редактировать"
                             >
                               <FaEdit />
                             </Button>
                             <Button
-                              variant="danger"
+                              variant="outline-danger"
                               size="sm"
                               onClick={() => handleDeleteWord(word.id)}
                               disabled={loading}
+                              title="Удалить"
                             >
                               <FaTrashAlt />
                             </Button>
-                          </div>
+                          </>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
           ) : (
-            <Alert variant="info" className="m-3">
-              Нет слов для этой части речи
+            <Alert variant="info" className="my-3">
+              Ничего не найдено
             </Alert>
           )}
         </div>
       </Modal.Body>
-      <Modal.Footer className="border-top-0">
+      <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
           Закрыть
         </Button>
       </Modal.Footer>
 
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
-        <Modal.Header closeButton className="modal-header">
-          <Modal.Title>Добавить слово</Modal.Title>
+        <Modal.Header closeButton>
+          <Modal.Title>Добавить новое слово</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {error && (
+            <Alert variant="danger" className="mb-3">
+              {error}
+            </Alert>
+          )}
+          
           <Form.Group className="mb-3">
             <Form.Label>Слово *</Form.Label>
             <Form.Control
               type="text"
               value={addForm.name}
               onChange={(e) => setAddForm({...addForm, name: e.target.value})}
-              required
+              isInvalid={!!error && !addForm.name.trim()}
             />
           </Form.Group>
+          
           <Form.Group className="mb-3">
             <Form.Label>Перевод *</Form.Label>
             <Form.Control
               type="text"
               value={addForm.translation}
               onChange={(e) => setAddForm({...addForm, translation: e.target.value})}
-              required
+              isInvalid={!!error && !addForm.translation.trim()}
             />
           </Form.Group>
+          
           <Form.Group className="mb-3">
             <Form.Label>Часть речи</Form.Label>
             <Form.Control
@@ -649,10 +751,14 @@ const FunctionWordsModal = ({ show, partOfSpeech, onHide }) => {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="btn btn-outline-secondary" onClick={() => setShowAddModal(false)}>
+          <Button variant="outline-secondary" onClick={() => setShowAddModal(false)}>
             Отмена
           </Button>
-          <Button variant="btn btn-outline-secondary" onClick={handleAddWord} disabled={loading}>
+          <Button 
+            variant="primary" 
+            onClick={handleAddWord} 
+            disabled={loading}
+          >
             {loading ? 'Добавление...' : 'Добавить'}
           </Button>
         </Modal.Footer>
