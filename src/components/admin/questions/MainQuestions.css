@@ -1,0 +1,54 @@
+.main-questions .table th {
+  font-weight: 500;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+}
+
+.main-questions .table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+  border-top: 1px solid #f0f0f0;
+}
+
+.main-questions .card {
+  border-radius: 0.5rem;
+}
+
+.main-questions .badge {
+  border-radius: 0.25rem;
+}
+
+.main-questions .btn-light {
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+
+.main-questions .btn-outline-secondary:hover {
+  background-color: #f8f9fa;
+}
+
+.main-questions .btn-outline-danger:hover {
+  background-color: #fff5f5;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .main-questions .table th, 
+  .main-questions .table td {
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  .main-questions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+}

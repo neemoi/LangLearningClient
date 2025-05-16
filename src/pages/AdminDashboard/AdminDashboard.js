@@ -5,7 +5,8 @@ import {
   FaBook, 
   FaFont,
   FaCogs,
-  FaVolumeUp
+  FaVolumeUp,
+  FaQuestion
 } from 'react-icons/fa';
 import './AdminDashboard.css';
 
@@ -61,6 +62,16 @@ const AdminDashboard = () => {
           <div className="card-content">
             <h2>Управление произношением</h2>
             <p>Категории и слова для тренировки произношения</p>
+          </div>
+        </Link>
+
+        <Link to="/admin/questions" className="dashboard-card">
+          <div className="card-icon" style={{ backgroundColor: '#fc4a1a' }}>
+            <FaQuestion size={24} />
+          </div>
+          <div className="card-content">
+            <h2>Управление вопросами</h2>
+            <p>Добавление и редактирование вопросов и тем</p>
           </div>
         </Link>
       </div>

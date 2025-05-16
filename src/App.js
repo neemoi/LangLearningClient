@@ -12,7 +12,8 @@ import LessonsManagement from './components/admin/lessons/LessonsManagement';
 import LessonDetail from './components/admin/lessons/details/LessonDetail';
 import AlphabetLettersManagement from './components/admin/alphabet/AlphabetLettersManagement';
 import FunctionsManagement from './components/admin/function/FunctionManagement';
-import PronunciationManagement from './components/admin/pronunciation/PronunciationManagement'; 
+import PronunciationManagement from './components/admin/pronunciation/PronunciationManagement';
+import MainQuestionsManager from './components/admin/questions/MainQuestionsPage';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="functions" element={<FunctionsManagement />} />
           <Route path="functions/:functionId" element={<FunctionsManagement />} />
           <Route path="pronunciation" element={<PronunciationManagement />} />
+          <Route path="questions" element={<MainQuestionsManager />} />
         </Route>
       </Routes>
     </div>
