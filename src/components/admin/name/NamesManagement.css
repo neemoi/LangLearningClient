@@ -1,0 +1,116 @@
+.names-management {
+  padding: 20px;
+}
+
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.search-refresh {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-bar {
+  width: 300px;
+}
+
+.names-table {
+  margin-bottom: 0;
+}
+
+.names-table th {
+  background-color: #f8f9fa;
+  white-space: nowrap;
+  padding: 16px 12px;
+}
+
+.names-table td {
+  padding: 16px 12px;
+  vertical-align: middle;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .management-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-refresh {
+    width: 100%;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .search-bar {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+  
+  .names-table th, 
+  .names-table td {
+    padding: 12px 8px;
+    font-size: 0.9rem;
+  }
+  
+  .action-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .names-management {
+    padding: 10px;
+  }
+  
+  .names-table {
+    font-size: 0.8rem;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+  }
+}

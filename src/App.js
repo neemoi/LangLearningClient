@@ -14,6 +14,7 @@ import AlphabetLettersManagement from './components/admin/alphabet/AlphabetLette
 import FunctionsManagement from './components/admin/function/FunctionManagement';
 import PronunciationManagement from './components/admin/pronunciation/PronunciationManagement';
 import MainQuestionsManager from './components/admin/questions/MainQuestionsPage';
+import NamesManagement from './components/admin/name/NamesManagement'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="functions/:functionId" element={<FunctionsManagement />} />
           <Route path="pronunciation" element={<PronunciationManagement />} />
           <Route path="questions" element={<MainQuestionsManager />} />
+          <Route path="names" element={<NamesManagement />} />
         </Route>
       </Routes>
     </div>
