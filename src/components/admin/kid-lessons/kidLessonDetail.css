@@ -1,0 +1,106 @@
+.lesson-page {
+  max-width: 1200px;
+}
+
+.lesson-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+}
+
+.lesson-loading .spinner {
+  width: 3rem;
+  height: 3rem;
+}
+
+.lesson-error {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.lesson-title {
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.description-card {
+  border-left: 4px solid #000000;
+  border-radius: 0.375rem;
+}
+
+.description-card .card-header {
+  font-size: 1.1rem;
+  background-color: rgba(13, 110, 253, 0.05) !important;
+}
+
+.lesson-image {
+  max-height: 350px;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+  border: 1px solid #eee;
+}
+
+.card-image {
+  max-height: 150px;
+  object-fit: contain;
+}
+
+.quiz-image {
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: rgba(13, 110, 253, 0.05);
+  color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .lesson-title {
+    font-size: 1.5rem;
+  }
+  
+  .description-card .card-header {
+    font-size: 1rem;
+  }
+  
+  .lesson-image {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 576px) {
+  .lesson-page {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .lesson-title {
+    font-size: 1.3rem;
+  }
+}

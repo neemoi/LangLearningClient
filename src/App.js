@@ -14,7 +14,9 @@ import AlphabetLettersManagement from './components/admin/alphabet/AlphabetLette
 import FunctionsManagement from './components/admin/function/FunctionManagement';
 import PronunciationManagement from './components/admin/pronunciation/PronunciationManagement';
 import MainQuestionsManager from './components/admin/questions/MainQuestionsPage';
-import NamesManagement from './components/admin/name/NamesManagement'
+import NamesManagement from './components/admin/name/NamesManagement';
+import KidLessonsManagement from './components/admin/kid-lessons/kiLessonsManagement';
+import KidLessonDetail from './components/admin/kid-lessons/kiLessonDetail';
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
           <Route path="users" element={<UsersManagement />} />
           <Route path="lessons" element={<LessonsManagement />} />
           <Route path="lessons/:id" element={<LessonDetail />} />
+          <Route path="kid-lessons" element={<KidLessonsManagement />} />
+          <Route path="kid-lessons/:id" element={<KidLessonDetail />} />
           <Route path="alphabet" element={<AlphabetLettersManagement />} />
           <Route path="functions" element={<FunctionsManagement />} />
           <Route path="functions/:functionId" element={<FunctionsManagement />} />

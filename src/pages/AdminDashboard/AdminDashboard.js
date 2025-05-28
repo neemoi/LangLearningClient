@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FaUsers, 
@@ -7,84 +6,109 @@ import {
   FaCogs,
   FaVolumeUp,
   FaQuestion,
-  FaUserTag
+  FaUserTag,
+  FaChild
 } from 'react-icons/fa';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
-      <h1 className="dashboard-title">Административная панель</h1>
-      <div className="dashboard-grid">
-        <Link to="/admin/users" className="dashboard-card">
-          <div className="card-icon bg-primary">
-            <FaUsers size={24} />
-          </div>
-          <div className="card-content">
-            <h2>Управление пользователями</h2>
-            <p>Просмотр, добавление и редактирование пользователей системы</p>
-          </div>
-        </Link>
-        
-        <Link to="/admin/lessons" className="dashboard-card">
-          <div className="card-icon bg-success">
-            <FaBook size={24} />
-          </div>
-          <div className="card-content">
-            <h2>Управление уроками</h2>
-            <p>Создание и редактирование учебных материалов</p>
-          </div>
-        </Link>
-        
-        <Link to="/admin/alphabet" className="dashboard-card">
-          <div className="card-icon bg-info">
-            <FaFont size={24} />
-          </div>
-          <div className="card-content">
-            <h2>Буквы алфавита</h2>
-            <p>Управление буквами и связанными изображениями</p>
-          </div>
-        </Link>
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">Административная панель</h1>
+      </div>
+      
+      <div className="dashboard-sections">
+        <div className="dashboard-section">
+          <h2 className="section-title">Основные разделы</h2>
+          <div className="section-grid">
 
-        <Link to="/admin/functions" className="dashboard-card">
-          <div className="card-icon bg-warning">
-            <FaCogs size={24} />
-          </div>
-          <div className="card-content">
-            <h2>Функции (Грамматические разделы)</h2>
-            <p>Управление грамматическими разделами</p>
-          </div>
-        </Link>
+            <Link to="/admin/lessons" className="dashboard-card highlighted">
+              <div className="card-icon bg-success">
+                <FaBook />
+              </div>
+              <div className="card-content">
+                <h3>Управление уроками</h3>
+                <p>Создание и редактирование учебных материалов</p>
+              </div>
+            </Link>
 
-        <Link to="/admin/pronunciation" className="dashboard-card">
-          <div className="card-icon bg-danger">
-            <FaVolumeUp size={24} />
+            <Link to="/admin/kid-lessons" className="dashboard-card">
+              <div className="card-icon bg-warning">
+                <FaChild />
+              </div>
+              <div className="card-content">
+                <h3>Уроки gFriend Kids</h3>
+                <p>Специальные уроки для детской аудитории</p>
+              </div>
+            </Link>
           </div>
-          <div className="card-content">
-            <h2>Управление произношением</h2>
-            <p>Категории и слова для тренировки произношения</p>
-          </div>
-        </Link>
+        </div>
 
-        <Link to="/admin/questions" className="dashboard-card">
-          <div className="card-icon" style={{ backgroundColor: '#fc4a1a' }}>
-            <FaQuestion size={24} />
-          </div>
-          <div className="card-content">
-            <h2>Управление вопросами</h2>
-            <p>Добавление и редактирование вопросов и тем</p>
-          </div>
-        </Link>
+        <div className="dashboard-section">
+          <h2 className="section-title">Контент и настройки</h2>
+          <div className="section-grid">
+            <Link to="/admin/users" className="dashboard-card">
+              <div className="card-icon bg-primary">
+                <FaUsers />
+              </div>
+              <div className="card-content">
+                <h3>Управление пользователями</h3>
+                <p>Просмотр и редактирование пользователей системы</p>
+              </div>
+            </Link>
+            
+            <Link to="/admin/alphabet" className="dashboard-card">
+              <div className="card-icon bg-info">
+                <FaFont />
+              </div>
+              <div className="card-content">
+                <h3>Буквы алфавита</h3>
+                <p>Управление буквами и связанными изображениями</p>
+              </div>
+            </Link>
 
-         <Link to="/admin/names" className="dashboard-card">
-          <div className="card-icon" style={{ backgroundColor: '#6a5acd' }}>
-            <FaUserTag size={24} />
+            <Link to="/admin/functions" className="dashboard-card">
+              <div className="card-icon bg-secondary">
+                <FaCogs />
+              </div>
+              <div className="card-content">
+                <h3>Грамматические разделы</h3>
+                <p>Управление грамматическими функциями</p>
+              </div>
+            </Link>
+
+            <Link to="/admin/pronunciation" className="dashboard-card">
+              <div className="card-icon bg-danger">
+                <FaVolumeUp />
+              </div>
+              <div className="card-content">
+                <h3>Произношение</h3>
+                <p>Категории и слова для тренировки</p>
+              </div>
+            </Link>
+
+            <Link to="/admin/questions" className="dashboard-card">
+              <div className="card-icon bg-purple">
+                <FaQuestion />
+              </div>
+              <div className="card-content">
+                <h3>Управление вопросами</h3>
+                <p>Добавление и редактирование вопросов</p>
+              </div>
+            </Link>
+
+            <Link to="/admin/names" className="dashboard-card">
+              <div className="card-icon bg-indigo">
+                <FaUserTag />
+              </div>
+              <div className="card-content">
+                <h3>Управление именами</h3>
+                <p>Добавление и редактирование имен</p>
+              </div>
+            </Link>
           </div>
-          <div className="card-content">
-            <h2>Управление именами</h2>
-            <p>Добавление и редактирование английских имен</p>
-          </div>
-        </Link>
+        </div>
       </div>
     </div>
   );
