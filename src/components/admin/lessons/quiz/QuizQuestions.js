@@ -86,6 +86,7 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     setLocalQuestions([...questions]);
@@ -124,6 +125,7 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
   };
 
   const createQuestion = async (questionData) => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/QuizQuestion`, {
@@ -160,6 +162,7 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
   };
 
   const updateQuestion = async (questionData) => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
       if (!questionData.id) throw new Error('Отсутствует ID вопроса для обновления');
@@ -200,6 +203,9 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
   };
 
   const handleQuestionSaved = async (questionData) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
     try {
       let result;
       if (currentQuestion && currentQuestion.id) {
@@ -216,6 +222,8 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
       return result;
     } catch (error) {
       alert(`Ошибка при сохранении: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -253,6 +261,7 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
               setShowModal(true);
             }}
             className="w-100 w-md-auto"
+            disabled={isProcessing}
           >
             <FaPlus className="me-2" /> Создать вопрос
           </Button>
@@ -357,13 +366,14 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
                           setShowModal(true);
                         }}
                         className="flex-grow-1"
+                        disabled={isProcessing}
                       >
                         <FaEdit className="me-2" /> Редактировать
                       </Button>
                       <Button
                         variant="outline-danger"
                         onClick={() => handleDelete(question.id)}
-                        disabled={isDeleting}
+                        disabled={isDeleting || isProcessing}
                         className="flex-grow-1"
                       >
                         {isDeleting ? (
@@ -403,13 +413,15 @@ const QuizQuestions = ({ questions = [], quizId, onUpdate }) => {
       <QuizQuestionModal
         show={showModal}
         onHide={() => {
-          setShowModal(false);
-          setCurrentQuestion(null);
+          if (!isProcessing) {
+            setShowModal(false);
+            setCurrentQuestion(null);
+          }
         }}
         quizId={quizId}
         question={currentQuestion}
         onSaveSuccess={handleQuestionSaved}
-        isSaving={isSaving}
+        isSaving={isProcessing}
       />
     </div>
   );

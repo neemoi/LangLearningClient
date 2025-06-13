@@ -23,7 +23,6 @@ import {
   FaPoll,
   FaInfoCircle
 } from 'react-icons/fa';
-import API_CONFIG from '../../../src/config';
 
 const QUESTION_TYPE_MAPPING = {
   image_choice: 'ImageChoice',
@@ -41,9 +40,10 @@ const QUESTION_TYPES = [
     label: 'Выбор по изображению',
     icon: <FaImage className="me-2" />,
     description: 'Ученик выбирает правильный ответ по изображению',
-    requiresText: true,
+    requiresText: false,
     requiresImage: true,
-    requiresAnswers: true,
+    requiresAudio: false,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -51,9 +51,10 @@ const QUESTION_TYPES = [
     label: 'Выбор по аудио',
     icon: <FaHeadphones className="me-2" />,
     description: 'Ученик выбирает ответ после прослушивания аудио',
-    requiresText: true,
+    requiresText: false,
+    requiresImage: false,
     requiresAudio: true,
-    requiresAnswers: true,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -61,10 +62,10 @@ const QUESTION_TYPES = [
     label: 'Комбинированный выбор',
     icon: <><FaImage className="me-2" /><FaHeadphones /></>,
     description: 'Комбинация изображения и аудио',
-    requiresText: true,
+    requiresText: false,
     requiresImage: true,
     requiresAudio: true,
-    requiresAnswers: true,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -73,6 +74,9 @@ const QUESTION_TYPES = [
     icon: <FaSpellCheck className="me-2" />,
     description: 'Проверка правильного написания',
     requiresText: true,
+    requiresImage: false,
+    requiresAudio: false,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -81,6 +85,9 @@ const QUESTION_TYPES = [
     icon: <FaLanguage className="me-2" />,
     description: 'Проверка грамматических знаний',
     requiresText: true,
+    requiresImage: false,
+    requiresAudio: false,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -89,6 +96,9 @@ const QUESTION_TYPES = [
     icon: <FaMicrophone className="me-2" />,
     description: 'Проверка правильного произношения',
     requiresText: true,
+    requiresImage: false,
+    requiresAudio: false,
+    requiresAnswers: false,
     requiresCorrectAnswer: true
   },
   {
@@ -97,6 +107,9 @@ const QUESTION_TYPES = [
     icon: <FaPoll className="me-2" />,
     description: 'Расширенный опрос',
     requiresText: true,
+    requiresImage: false,
+    requiresAudio: false,
+    requiresAnswers: true,
     requiresCorrectAnswer: true
   }
 ];
@@ -106,7 +119,8 @@ const QuizQuestionModal = ({
   onHide, 
   quizId, 
   question = null, 
-  onSaveSuccess
+  onSaveSuccess,
+  isSaving
 }) => {
   const [formData, setFormData] = useState({
     questionText: '',
@@ -122,7 +136,6 @@ const QuizQuestionModal = ({
 
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
 
   const currentQuestionType = QUESTION_TYPES.find(
     type => type.value === formData.questionType
@@ -170,7 +183,6 @@ const QuizQuestionModal = ({
     });
     setErrors({});
     setApiError('');
-    setIsSaving(false);
   };
 
   const validateForm = () => {
@@ -180,18 +192,16 @@ const QuizQuestionModal = ({
       newErrors.questionText = 'Текст вопроса обязателен';
     }
 
-    if (currentQuestionType.requiresCorrectAnswer) {
-      if (!formData.correctAnswer.trim() && !formData.answers.some(a => a.isCorrect)) {
-        newErrors.correctAnswer = 'Укажите правильный ответ или отметьте верный вариант';
-      }
-    }
-
     if (currentQuestionType.requiresImage && !formData.imageUrl.trim()) {
       newErrors.imageUrl = 'URL изображения обязателен';
     }
 
     if (currentQuestionType.requiresAudio && !formData.audioUrl.trim()) {
       newErrors.audioUrl = 'URL аудио обязателен';
+    }
+
+    if (currentQuestionType.requiresCorrectAnswer && !formData.correctAnswer.trim()) {
+      newErrors.correctAnswer = 'Укажите правильный ответ';
     }
 
     if (currentQuestionType.requiresAnswers) {
@@ -213,54 +223,36 @@ const QuizQuestionModal = ({
       quizId: Number(quizId),
       questionType: QUESTION_TYPE_MAPPING[formData.questionType] || 'ImageChoice',
       questionText: formData.questionText.trim(),
-      correctAnswer: formData.correctAnswer.trim() || 
-        (formData.answers.find(a => a.isCorrect)?.answerText || '')
-    };
-    if (formData.imageUrl) payload.imageUrl = formData.imageUrl.trim();
-    if (formData.audioUrl) payload.audioUrl = formData.audioUrl.trim();
-    if (formData.answers) {
-      payload.answers = formData.answers.map(a => ({
+      imageUrl: formData.imageUrl.trim(),
+      audioUrl: formData.audioUrl.trim(),
+      correctAnswer: formData.correctAnswer.trim(),
+      answers: formData.answers.map(a => ({
         answerText: a.answerText.trim(),
         isCorrect: a.isCorrect
-      }));
+      }))
+    };
+
+    if (formData.questionType === 'image_audio_choice') {
+      payload.questionText = '';
+      payload.answers = [];
     }
+
     if (question) payload.id = question.id;
     return payload;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
     if (!validateForm()) return;
     
     try {
-      setIsSaving(true);
       setApiError('');
-      
       const payload = preparePayload();
-      const method = question ? 'PUT' : 'POST';
-      const url = question 
-        ? `${API_CONFIG.BASE_URL}/api/QuizQuestion`
-        : `${API_CONFIG.BASE_URL}/api/QuizQuestion`;
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.title || errorData.message || 'Ошибка сервера');
-      }
-
-      const savedQuestion = await response.json();
-      onSaveSuccess(savedQuestion);
-      onHide();
+      onSaveSuccess(payload);
     } catch (error) {
       console.error('API Error:', error);
       setApiError(error.message);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -301,8 +293,8 @@ const QuizQuestionModal = ({
   );
 
   return (
-    <Modal show={show} onHide={onHide} size="lg" centered>
-      <Modal.Header closeButton>
+    <Modal show={show} onHide={!isSaving ? onHide : null} size="lg" centered>
+      <Modal.Header closeButton={!isSaving}>
         <Modal.Title>{question ? 'Редактировать вопрос' : 'Создать новый вопрос'}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -322,6 +314,7 @@ const QuizQuestionModal = ({
               value={formData.questionType}
               onChange={handleInputChange}
               isInvalid={!!errors.questionType}
+              disabled={isSaving}
             >
               {QUESTION_TYPES.map(type => (
                 <option key={type.value} value={type.value}>{type.label}</option>
@@ -339,6 +332,7 @@ const QuizQuestionModal = ({
                 value={formData.questionText}
                 onChange={handleInputChange}
                 isInvalid={!!errors.questionText}
+                disabled={isSaving}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.questionText}
@@ -346,7 +340,79 @@ const QuizQuestionModal = ({
             </Form.Group>
           )}
 
-          {currentQuestionType.requiresCorrectAnswer && (
+          {currentQuestionType.requiresImage && (
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Ссылка на изображение *</Form.Label>
+                <Form.Control
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                  isInvalid={!!errors.imageUrl}
+                  disabled={isSaving}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.imageUrl}
+                </Form.Control.Feedback>
+              </Form.Group>
+              
+              <Form.Group className="mb-3">
+                <Form.Label>Правильный ответ (изображение) *</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="correctAnswer"
+                  value={formData.correctAnswer}
+                  onChange={handleInputChange}
+                  isInvalid={!!errors.correctAnswer}
+                  placeholder="Введите правильный ответ для изображения"
+                  disabled={isSaving}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.correctAnswer}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </>
+          )}
+
+          {currentQuestionType.requiresAudio && (
+            <>
+              <Form.Group className="mb-3">
+                <Form.Label>Ссылка на аудио *</Form.Label>
+                <Form.Control
+                  type="url"
+                  name="audioUrl"
+                  value={formData.audioUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/audio.mp3"
+                  isInvalid={!!errors.audioUrl}
+                  disabled={isSaving}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.audioUrl}
+                </Form.Control.Feedback>
+              </Form.Group>
+              
+              <Form.Group className="mb-3">
+                <Form.Label>Правильный ответ (аудио) *</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="correctAnswer"
+                  value={formData.correctAnswer}
+                  onChange={handleInputChange}
+                  isInvalid={!!errors.correctAnswer}
+                  placeholder="Введите правильный ответ для аудио"
+                  disabled={isSaving}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.correctAnswer}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </>
+          )}
+
+          {!currentQuestionType.requiresImage && !currentQuestionType.requiresAudio && currentQuestionType.requiresCorrectAnswer && (
             <Form.Group className="mb-3">
               <Form.Label>Правильный ответ *</Form.Label>
               <Form.Control
@@ -356,48 +422,10 @@ const QuizQuestionModal = ({
                 onChange={handleInputChange}
                 isInvalid={!!errors.correctAnswer}
                 placeholder="Введите правильный ответ"
+                disabled={isSaving}
               />
               <Form.Control.Feedback type="invalid">
                 {errors.correctAnswer}
-              </Form.Control.Feedback>
-              {formData.answers.some(a => a.isCorrect) && (
-                <Form.Text className="text-muted">
-                  Примечание: Есть вариант ответа, отмеченный как верный. Если вы укажете текст здесь, он будет иметь приоритет.
-                </Form.Text>
-              )}
-            </Form.Group>
-          )}
-
-          {currentQuestionType.requiresImage && (
-            <Form.Group className="mb-3">
-              <Form.Label>Ссылка на изображение *</Form.Label>
-              <Form.Control
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/image.jpg"
-                isInvalid={!!errors.imageUrl}
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.imageUrl}
-              </Form.Control.Feedback>
-            </Form.Group>
-          )}
-
-          {currentQuestionType.requiresAudio && (
-            <Form.Group className="mb-3">
-              <Form.Label>Ссылка на аудио *</Form.Label>
-              <Form.Control
-                type="url"
-                name="audioUrl"
-                value={formData.audioUrl}
-                onChange={handleInputChange}
-                placeholder="https://example.com/audio.mp3"
-                isInvalid={!!errors.audioUrl}
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.audioUrl}
               </Form.Control.Feedback>
             </Form.Group>
           )}
@@ -406,7 +434,12 @@ const QuizQuestionModal = ({
             <>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5>Варианты ответов *</h5>
-                <Button variant="outline-primary" size="sm" onClick={addAnswer}>
+                <Button 
+                  variant="outline-primary" 
+                  size="sm" 
+                  onClick={addAnswer}
+                  disabled={isSaving}
+                >
                   <FaPlus /> Добавить вариант
                 </Button>
               </div>
@@ -427,12 +460,14 @@ const QuizQuestionModal = ({
                         onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
                         placeholder="Текст ответа"
                         isInvalid={errors.answers && !answer.answerText.trim()}
+                        disabled={isSaving}
                       />
                     </Col>
                     <Col md={3}>
                       <Form.Select
                         value={answer.isCorrect.toString()}
                         onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.value)}
+                        disabled={isSaving}
                       >
                         <option value="false">Неверный</option>
                         <option value="true">Верный</option>
@@ -443,7 +478,7 @@ const QuizQuestionModal = ({
                         variant="outline-danger"
                         size="sm"
                         onClick={() => removeAnswer(index)}
-                        disabled={formData.answers.length <= 1}
+                        disabled={formData.answers.length <= 1 || isSaving}
                       >
                         <FaTrash />
                       </Button>
@@ -455,7 +490,11 @@ const QuizQuestionModal = ({
           )}
 
           <Modal.Footer>
-            <Button variant="secondary" onClick={onHide} disabled={isSaving}>
+            <Button 
+              variant="secondary" 
+              onClick={onHide} 
+              disabled={isSaving}
+            >
               <FaTimes /> Отмена
             </Button>
             <Button

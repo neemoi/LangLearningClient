@@ -1,0 +1,155 @@
+:root {
+  --primary: #000000;
+  --primary-light: #56c51f;
+  --text: #111827;
+  --text-light: #72806b;
+  --white: #ffffff;
+  --border: #e5e7eb;
+  --error: #ee3b3b;
+  --error-bg: #fee2e2;
+}
+
+.lesson-header-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.words-counter {
+  display: flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  font-family: Arial, sans-serif;
+}
+
+.learned-count {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.total-count {
+  font-size: 16px;
+  color: var(--text-light);
+  margin-left: 2px;
+}
+
+.error-message {
+  font-size: 14px;
+  color: var(--error);
+  margin-left: 8px;
+}
+
+.progress-section {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.progress-tooltip {
+  position: absolute;
+  right: 8px;
+  top: -28px;
+  background: var(--primary);
+  color: var(--white);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px; 
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.monitoring-btn {
+  background: #f0f5ff;
+  color: var(--primary);
+}
+
+.monitoring-btn:hover:not(:disabled) {
+  background: #e0e7ff;
+  transform: translateY(-1px);
+}
+
+.pdf-btn {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.pdf-btn:hover:not(:disabled) {
+  background: #fecaca;
+  transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .header-top-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .progress-section {
+    margin-top: 8px;
+  }
+  
+  .action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}

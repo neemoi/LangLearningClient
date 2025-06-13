@@ -26,7 +26,6 @@ const Navigation = ({ onToggleSidebar, isSidebarOpen, onLoginSuccess }) => {
       onToggleSidebar();
     }
 
-    // Передаём данные родительскому компоненту (MainPage)
     if (onLoginSuccess) {
       onLoginSuccess(userData);
     }

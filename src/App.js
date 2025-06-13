@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import MainPage from './pages/MainPage/MainPage';
@@ -17,6 +17,15 @@ import MainQuestionsManager from './components/admin/questions/MainQuestionsPage
 import NamesManagement from './components/admin/name/NamesManagement';
 import KidLessonsManagement from './components/admin/kid-lessons/kiLessonsManagement';
 import KidLessonDetail from './components/admin/kid-lessons/kiLessonDetail';
+import LessonsPage from './pages/LessonsPage/LessonsPage';
+import WordsPage from './pages/LessonsPage/WordsPage/WordsPage';
+import PhrasesPage from './pages/LessonsPage/PhrasesPage/PhrasesPage';
+import ImageTestPage from './pages/LessonsPage/Quizzes/ImageTestPage';
+import MonitoringPage from './pages/LessonsPage/MonitoringPage/MonitoringPage';
+
+        //<Route path="/lessonsVirtual/:lessonId/audio-test" element={<AudioTestPage />} />
+        //<Route path="/lessonsVirtual/:lessonId/audio-image-test" element={<AudioImageTestPage />} />
+        //<Route path="/lessonsVirtual/:lessonId/spelling-test" element={<SpellingTestPage />} />
 
 function App() {
   return (
@@ -26,6 +35,16 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<PasswordResetPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route 
+          path="/lessonsVirtual" 
+          element={<Navigate to="/lessonsVirtual/1" replace />} 
+        />
+        <Route path="/lessonsVirtual/:lessonId" element={<LessonsPage />} />
+        <Route path="/lessonsVirtual/:lessonId/phrases" element={<PhrasesPage />} />
+        <Route path="/lessonsVirtual/:lessonId/words" element={<WordsPage />} />
+        <Route path="/lessonsVirtual/:lessonId" element={<LessonsPage />} />
+        <Route path="/monitoring/:lessonId" element={<MonitoringPage />} />
+        <Route path="/lessonsVirtual/:lessonId/image-test" element={<ImageTestPage />} />
         <Route path="/admin" element={<AdminPage />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UsersManagement />} />
