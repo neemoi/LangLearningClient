@@ -73,8 +73,8 @@ const QUESTION_TYPES = [
     label: 'Правописание',
     icon: <FaSpellCheck className="me-2" />,
     description: 'Проверка правильного написания',
-    requiresText: true,
-    requiresImage: false,
+    requiresText: false,
+    requiresImage: true,
     requiresAudio: false,
     requiresAnswers: false,
     requiresCorrectAnswer: true
@@ -84,10 +84,10 @@ const QUESTION_TYPES = [
     label: 'Грамматика',
     icon: <FaLanguage className="me-2" />,
     description: 'Проверка грамматических знаний',
-    requiresText: true,
+    requiresText: false,
     requiresImage: false,
     requiresAudio: false,
-    requiresAnswers: false,
+    requiresAnswers: true,
     requiresCorrectAnswer: true
   },
   {
@@ -200,18 +200,19 @@ const QuizQuestionModal = ({
       newErrors.audioUrl = 'URL аудио обязателен';
     }
 
-    if (currentQuestionType.requiresCorrectAnswer && !formData.correctAnswer.trim()) {
-      newErrors.correctAnswer = 'Укажите правильный ответ';
-    }
-
     if (currentQuestionType.requiresAnswers) {
-      if (formData.answers.length < 1) {
-        newErrors.answers = 'Необходим хотя бы один вариант ответа';
+      if (formData.answers.length < 2) {
+        newErrors.answers = 'Необходимо минимум 2 варианта ответа';
       } else if (formData.answers.some(a => !a.answerText.trim())) {
         newErrors.answers = 'Все варианты ответов должны быть заполнены';
-      } else if (!formData.answers.some(a => a.isCorrect) && !formData.correctAnswer.trim()) {
-        newErrors.answers = 'Необходимо указать хотя бы один правильный вариант ответа';
+      } else if (!formData.answers.some(a => a.isCorrect)) {
+        newErrors.answers = 'Необходимо указать один правильный вариант ответа';
+      } else if (formData.answers.filter(a => a.isCorrect).length > 1 && 
+                 formData.questionType === 'grammar_selection') {
+        newErrors.answers = 'Для грамматики допускается только один правильный ответ';
       }
+    } else if (currentQuestionType.requiresCorrectAnswer && !formData.correctAnswer.trim()) {
+      newErrors.correctAnswer = 'Укажите правильный ответ';
     }
 
     setErrors(newErrors);
@@ -237,6 +238,12 @@ const QuizQuestionModal = ({
       payload.answers = [];
     }
 
+    if (formData.questionType === 'grammar_selection') {
+      payload.questionText = 'Выберите правильный грамматический вариант';
+      const correctAnswer = formData.answers.find(a => a.isCorrect);
+      payload.correctAnswer = correctAnswer ? correctAnswer.answerText : '';
+    }
+
     if (question) payload.id = question.id;
     return payload;
   };
@@ -244,15 +251,19 @@ const QuizQuestionModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSaving) return;
-    if (!validateForm()) return;
+    
+    if (!validateForm()) {
+      return;
+    }
     
     try {
       setApiError('');
       const payload = preparePayload();
-      onSaveSuccess(payload);
+      await onSaveSuccess(payload);
+      resetForm();
     } catch (error) {
       console.error('API Error:', error);
-      setApiError(error.message);
+      setApiError(error.message || 'Произошла ошибка при сохранении');
     }
   };
 
@@ -266,8 +277,11 @@ const QuizQuestionModal = ({
     const newAnswers = [...formData.answers];
     const newValue = field === 'isCorrect' ? (typeof value === 'string' ? value === 'true' : value) : value;
     
-    if (field === 'isCorrect' && newValue === true) {
-      newAnswers.forEach(a => a.isCorrect = false);
+    if (field === 'isCorrect' && newValue) {
+      if (formData.questionType === 'grammar_selection') {
+        newAnswers.forEach(a => a.isCorrect = false);
+      } else {
+      }
     }
     
     newAnswers[index][field] = newValue;
@@ -283,7 +297,7 @@ const QuizQuestionModal = ({
   };
 
   const removeAnswer = (index) => {
-    if (formData.answers.length <= 1) return;
+    if (formData.answers.length <= 2) return;
     const newAnswers = formData.answers.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, answers: newAnswers }));
   };
@@ -299,6 +313,7 @@ const QuizQuestionModal = ({
       </Modal.Header>
       <Modal.Body>
         {apiError && <Alert variant="danger">{apiError}</Alert>}
+        
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
             <Form.Label>
@@ -317,7 +332,9 @@ const QuizQuestionModal = ({
               disabled={isSaving}
             >
               {QUESTION_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+                <option key={type.value} value={type.value}>
+                  {type.icon} {type.label}
+                </option>
               ))}
             </Form.Select>
           </Form.Group>
@@ -358,21 +375,23 @@ const QuizQuestionModal = ({
                 </Form.Control.Feedback>
               </Form.Group>
               
-              <Form.Group className="mb-3">
-                <Form.Label>Правильный ответ (изображение) *</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="correctAnswer"
-                  value={formData.correctAnswer}
-                  onChange={handleInputChange}
-                  isInvalid={!!errors.correctAnswer}
-                  placeholder="Введите правильный ответ для изображения"
-                  disabled={isSaving}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.correctAnswer}
-                </Form.Control.Feedback>
-              </Form.Group>
+              {formData.questionType !== 'spelling' && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Правильный ответ (изображение) *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="correctAnswer"
+                    value={formData.correctAnswer}
+                    onChange={handleInputChange}
+                    isInvalid={!!errors.correctAnswer}
+                    placeholder="Введите правильный ответ для изображения"
+                    disabled={isSaving}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.correctAnswer}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              )}
             </>
           )}
 
@@ -412,16 +431,16 @@ const QuizQuestionModal = ({
             </>
           )}
 
-          {!currentQuestionType.requiresImage && !currentQuestionType.requiresAudio && currentQuestionType.requiresCorrectAnswer && (
+          {formData.questionType === 'spelling' && (
             <Form.Group className="mb-3">
-              <Form.Label>Правильный ответ *</Form.Label>
+              <Form.Label>Правильный ответ (правописание) *</Form.Label>
               <Form.Control
                 type="text"
                 name="correctAnswer"
                 value={formData.correctAnswer}
                 onChange={handleInputChange}
                 isInvalid={!!errors.correctAnswer}
-                placeholder="Введите правильный ответ"
+                placeholder="Введите правильное написание слова"
                 disabled={isSaving}
               />
               <Form.Control.Feedback type="invalid">
@@ -438,7 +457,7 @@ const QuizQuestionModal = ({
                   variant="outline-primary" 
                   size="sm" 
                   onClick={addAnswer}
-                  disabled={isSaving}
+                  disabled={isSaving || formData.answers.length >= 6}
                 >
                   <FaPlus /> Добавить вариант
                 </Button>
@@ -478,7 +497,7 @@ const QuizQuestionModal = ({
                         variant="outline-danger"
                         size="sm"
                         onClick={() => removeAnswer(index)}
-                        disabled={formData.answers.length <= 1 || isSaving}
+                        disabled={formData.answers.length <= 2 || isSaving}
                       >
                         <FaTrash />
                       </Button>
@@ -487,6 +506,27 @@ const QuizQuestionModal = ({
                 </div>
               ))}
             </>
+          )}
+
+          {!currentQuestionType.requiresImage && 
+           !currentQuestionType.requiresAudio && 
+           !currentQuestionType.requiresAnswers &&
+           currentQuestionType.requiresCorrectAnswer && (
+            <Form.Group className="mb-3">
+              <Form.Label>Правильный ответ *</Form.Label>
+              <Form.Control
+                type="text"
+                name="correctAnswer"
+                value={formData.correctAnswer}
+                onChange={handleInputChange}
+                isInvalid={!!errors.correctAnswer}
+                placeholder="Введите правильный ответ"
+                disabled={isSaving}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.correctAnswer}
+              </Form.Control.Feedback>
+            </Form.Group>
           )}
 
           <Modal.Footer>

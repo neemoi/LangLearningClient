@@ -1,58 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import Navigation from '../../../components/layout/Navigation/Navigation';
-import Sidebar from '../../../components/layout/Sidebar/Sidebar';
-import API_CONFIG from '../../../components/src/config';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Navigation from '../../../../components/layout/Navigation/Navigation';
+import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
+import API_CONFIG from '../../../../components/src/config';
 import ActiveTestScreen from './ActiveTestScreen';
-import ResultsScreen from './ResultsScreen';
+import ResultsImageScreen from './ResultsImageScreen';
 import StartScreen from './StartScreen';
+import EmptyTestState from './../audioImage/EmptyTestState';
 import TestSidebar from './TestSidebar';
-import './ImageTestPage.css';
+import './css/ImageTestPage.css';
 
 const Loader = () => (
   <div className="loader-container">
     <div className="loader-spinner"></div>
     <p>Загрузка теста...</p>
-  </div>
-);
-
-const EmptyTestState = ({ testQuestions, lessonId, navigate }) => (
-  <div className="empty-test-container">
-    <div className="empty-test-card">
-      <div className="empty-test-icon">📭</div>
-      <h2>Тест временно недоступен</h2>
-      <p>Для этого теста пока нет вопросов.</p>
-      
-      <div className="test-stats-grid">
-        <div className="test-stat-card">
-          <div className="stat-icon">🖼️</div>
-          <div className="stat-count">{testQuestions.image.length}</div>
-          <div className="stat-name">Изображения</div>
-        </div>
-        <div className="test-stat-card">
-          <div className="stat-icon">🔊</div>
-          <div className="stat-count">{testQuestions.audio.length}</div>
-          <div className="stat-name">Аудио</div>
-        </div>
-        <div className="test-stat-card">
-          <div className="stat-icon">🎬</div>
-          <div className="stat-count">{testQuestions['audio-image'].length}</div>
-          <div className="stat-name">Аудио+Изображение</div>
-        </div>
-        <div className="test-stat-card">
-          <div className="stat-icon">✍️</div>
-          <div className="stat-count">{testQuestions.spelling.length}</div>
-          <div className="stat-name">Правописание</div>
-        </div>
-      </div>
-      
-      <button 
-        className="return-btn" 
-        onClick={() => navigate(`/lessonsVirtual/${lessonId}`)}
-      >
-        Вернуться к уроку
-      </button>
-    </div>
   </div>
 );
 
@@ -62,7 +23,7 @@ const formatTime = (seconds) => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-const TestPage = () => {
+const ImageTestPage = () => {
   const { lessonId, testType = 'image' } = useParams();
   const navigate = useNavigate();
   
@@ -83,7 +44,7 @@ const TestPage = () => {
   const [timeExpired, setTimeExpired] = useState(false);
   
   const [testQuestions, setTestQuestions] = useState({
-    image: [], audio: [], 'audio-image': [], spelling: []
+    image: [], audio: [], 'audio-image': [], spelling: [], grammar: []
   });
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [allWords, setAllWords] = useState([]);
@@ -91,7 +52,7 @@ const TestPage = () => {
   const [bestResults, setBestResults] = useState({ score: 0, time: 0 });
   const [detailedProgress, setDetailedProgress] = useState(null);
   const [quizProgress, setQuizProgress] = useState({
-    image: 0, audio: 0, 'audio-image': 0, spelling: 0
+    image: 0, audio: 0, 'audio-image': 0, spelling: 0, grammar: 0
   });
   const [wordStats, setWordStats] = useState({
     totalWordsInLesson: 0,
@@ -102,11 +63,45 @@ const TestPage = () => {
 
   const quizData = {
     nouns: [
-      { id: 'image', icon: 'https://winner.gfriend.com/Content/images/vc-but04.png', tooltip: 'по изображениям' },
-      { id: 'audio', icon: 'https://winner.gfriend.com/Content/images/vc-but05.png', tooltip: 'по звукозаписи' },
-      { id: 'audio-image', icon: 'https://winner.gfriend.com/Content/images/vc-but06.png', tooltip: 'звук + изображение' },
-      { id: 'spelling', icon: 'https://winner.gfriend.com/Content/images/vc-but07.png', tooltip: 'на правописание' }
+      { id: 'image', icon: 'https://winner.gfriend.com/Content/images/vc-but04.png', tooltip: 'Изображение/Текст' },
+      { id: 'audio', icon: 'https://winner.gfriend.com/Content/images/vc-but05.png', tooltip: 'Текст/Звукозапись' },
+      { id: 'audio-image', icon: 'https://winner.gfriend.com/Content/images/vc-but06.png', tooltip: 'Изображение/Звукозапись' },
+      { id: 'spelling', icon: 'https://winner.gfriend.com/Content/images/vc-but07.png', tooltip: 'Правописание/Печать' }
+    ],
+    grammar: [
+      { id: 'grammar', icon: 'https://winner.gfriend.com/Content/images/vc-but08.png', tooltip: 'Грамматика' }
     ]
+  };
+
+  useEffect(() => {
+    let interval;
+    if (timerActive) {
+      interval = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
+  useEffect(() => {
+    let questionInterval;
+    if (testStarted && !showResults && questionTimeLeft > 0) {
+      questionInterval = setInterval(() => {
+        setQuestionTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (questionTimeLeft === 0 && !timeExpired) {
+      setTimeExpired(true);
+      handleTimeExpired();
+    }
+    return () => clearInterval(questionInterval);
+  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const navigateToTest = (testId) => {
+    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
   };
 
   useEffect(() => {
@@ -129,14 +124,6 @@ const TestPage = () => {
     }
   }, [navigate, lessonId]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const navigateToTest = (testId) => {
-    navigate(`/lessonsVirtual/${lessonId}/test/${testId}`);
-  };
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -145,29 +132,19 @@ const TestPage = () => {
       
       const [allWordsRes, lessonWordsRes, quizzesRes, progressRes, wordStatsRes] = await Promise.all([
         fetch(`${API_CONFIG.BASE_URL}/api/Words`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/words`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/quizzes`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-stats/${user.id}/${lessonId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
@@ -184,24 +161,32 @@ const TestPage = () => {
         wordStatsRes.json()
       ]);
       
-      setAllWords(allWordsData);
-      setLessonWords(lessonWordsData);
+      setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
+      setLessonWords(Array.isArray(lessonWordsData) ? lessonWordsData : []);
       setTestQuestions(processQuestions(quizzesData, allWordsData));
-      setDetailedProgress(progressData);
-      setWordStats(wordStatsData);
+      setDetailedProgress(progressData || null);
+      setWordStats(wordStatsData || {
+        totalWordsInLesson: 0,
+        learnedWordsInLesson: 0,
+        totalWordsOverall: 0,
+        learnedWordsOverall: 0
+      });
       
-      const quizTypes = ['image', 'audio', 'audio-image', 'spelling'];
+      const quizTypes = ['image', 'audio', 'audio-image', 'spelling', 'grammar'];
       const progressMap = {};
       quizTypes.forEach(type => {
         const quizId = getQuestionType(type);
-        const quiz = progressData.quizzes?.find(q => q.quizId === quizId);
-        const progress = quiz ? Math.round((quiz.correctAnswers / quiz.totalQuestions) * 100) : 0;
+        const quiz = progressData?.quizzes?.find(q => q.quizId === quizId) || {};
+        const progress = quiz ? Math.round((quiz.correctAnswers / (quiz.totalQuestions || 1)) * 100) : 0;
         progressMap[type] = isNaN(progress) ? 0 : progress;
       });
       setQuizProgress(progressMap);
       
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Ошибка при загрузке данных:', error);
+      setAllWords([]);
+      setLessonWords([]);
+      setTestQuestions({ image: [], audio: [], 'audio-image': [], spelling: [], grammar: [] });
     } finally {
       setLoading(false);
     }
@@ -213,70 +198,56 @@ const TestPage = () => {
     navigate('/');
   };
 
-  useEffect(() => {
-    if (testQuestions[testType]?.length) {
-      setShuffledQuestions([...testQuestions[testType]].sort(() => 0.5 - Math.random()));
-    }
-  }, [testType, testQuestions]);
-
-  useEffect(() => {
-    let interval;
-    if (timerActive) {
-      interval = setInterval(() => setTime(prev => prev + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timerActive]);
-
-  useEffect(() => {
-    let questionTimer;
-    if (testStarted && !showResults && questionTimeLeft > 0) {
-      questionTimer = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
-    } else if (questionTimeLeft === 0 && !timeExpired) {
-      setTimeExpired(true);
-      handleTimeExpired();
-    }
-    return () => clearInterval(questionTimer);
-  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
-
-  useEffect(() => {
-    if (testStarted) {
-      setQuestionTimeLeft(12);
-      setTimeExpired(false);
-    }
-  }, [currentQuestionIndex, testStarted]);
-
   const processQuestions = (quizzesData, wordsData) => {
-    const result = { image: [], audio: [], 'audio-image': [], spelling: [] };
+    const result = { 
+      image: [], 
+      audio: [], 
+      'audio-image': [], 
+      spelling: [],
+      grammar: [] 
+    };
+
+    if (!Array.isArray(quizzesData)) {
+      console.error('quizzesData не является массивом:', quizzesData);
+      return result;
+    }
 
     quizzesData.forEach(quiz => {
-      quiz.questions?.forEach(question => {
-        const processedQuestion = {
-          ...question,
-          options: generateOptions(question.correctAnswer, wordsData, 4)
-        };
+      if (quiz.questions && Array.isArray(quiz.questions)) {
+        quiz.questions.forEach(question => {
+          const processedQuestion = {
+            ...question,
+            options: generateOptions(question.correctAnswer, wordsData, 4)
+          };
 
-        const qType = question.questionType.toLowerCase();
-        if (qType.includes('image') && !qType.includes('audio')) {
-          result.image.push(processedQuestion);
-        } else if (qType.includes('audio') && !qType.includes('image')) {
-          result.audio.push(processedQuestion);
-        } else if (qType.includes('audio') && qType.includes('image')) {
-          result['audio-image'].push(processedQuestion);
-        } else if (qType.includes('spelling')) {
-          result.spelling.push(processedQuestion);
-        }
-      });
+          const qType = (question.questionType || '').toLowerCase();
+          if (qType.includes('image') && !qType.includes('audio')) {
+            result.image.push(processedQuestion);
+          } else if (qType.includes('audio') && !qType.includes('image')) {
+            result.audio.push(processedQuestion);
+          } else if (qType.includes('audio') && qType.includes('image')) {
+            result['audio-image'].push(processedQuestion);
+          } else if (qType.includes('spelling')) {
+            result.spelling.push(processedQuestion);
+          } else if (qType.includes('grammar')) {
+            result.grammar.push(processedQuestion);
+          }
+        });
+      }
     });
 
     return result;
   };
 
   const generateOptions = (correctAnswer, wordsData, count = 4) => {
-    if (!wordsData?.length) return [correctAnswer];
+    if (!Array.isArray(wordsData) || wordsData.length === 0 || !correctAnswer) {
+      return [correctAnswer].filter(Boolean);
+    }
     
     const otherWords = wordsData
-      .filter(word => word.name.toLowerCase() !== correctAnswer.toLowerCase())
-      .map(word => word.name);
+      .filter(word => word?.name?.toLowerCase() !== correctAnswer?.toLowerCase())
+      .map(word => word.name)
+      .filter(Boolean);
     
     const randomWords = [...otherWords]
       .sort(() => 0.5 - Math.random())
@@ -285,18 +256,87 @@ const TestPage = () => {
     return [...randomWords, correctAnswer].sort(() => 0.5 - Math.random());
   };
 
-  const currentTestQuestions = shuffledQuestions;
-  const totalQuestions = currentTestQuestions.length;
-  const currentQuestion = currentTestQuestions[currentQuestionIndex] || {};
-
   const getQuestionType = (type) => {
     switch(type) {
       case 'image': return 1;
       case 'audio': return 2;
       case 'audio-image': return 3;
       case 'spelling': return 4;
+      case 'grammar': return 5;
       default: return 0;
     }
+  };
+
+  const startTest = () => {
+    if (testQuestions[testType].length === 0) {
+      alert(`Нет вопросов для теста. Доступно:
+      Изображения: ${testQuestions.image.length}
+      Аудио: ${testQuestions.audio.length}
+      Аудио+Изображение: ${testQuestions['audio-image'].length}
+      Правописание: ${testQuestions.spelling.length}
+      Грамматика: ${testQuestions.grammar.length}`);
+      return;
+    }
+    
+    setShuffledQuestions([...testQuestions[testType]].sort(() => 0.5 - Math.random()));
+    setTestStarted(true);
+    setTimerActive(true);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setErrors(0);
+    setTime(0);
+    setShowResults(false);
+    setSelectedAnswer(null);
+    setQuestionTimeLeft(12);
+    setTimeExpired(false);
+  };
+
+  const handleTimeExpired = async () => {
+    const newErrors = errors + 1;
+    setErrors(newErrors);
+    await sendProgress(false);
+    setTimeout(goToNextQuestion, 2000);
+  };
+
+  const handleAnswerSelect = async (answer) => {
+    if (!currentQuestion || timeExpired) return;
+    
+    const isCorrect = answer === currentQuestion.correctAnswer;
+    setSelectedAnswer(answer);
+    
+    if (isCorrect) {
+      setScore(prevScore => prevScore + 1);
+    } else {
+      setErrors(prevErrors => prevErrors + 1);
+    }
+    
+    await sendProgress(isCorrect);
+    setTimeout(goToNextQuestion, 2000);
+  };
+
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      setSelectedAnswer(null);
+      setQuestionTimeLeft(12);
+      setTimeExpired(false);
+    } else {
+      finishTest();
+    }
+  };
+
+  const finishTest = () => {
+    setTimerActive(false);
+    
+    const currentScore = Math.round((score / shuffledQuestions.length) * 100);
+    const isNewRecord = currentScore > bestResults.score || 
+                      (currentScore === bestResults.score && time < bestResults.time);
+    
+    if (isNewRecord) {
+      setBestResults({ score: currentScore, time });
+    }
+
+    setShowResults(true);
   };
 
   const sendProgress = async (isCorrect) => {
@@ -305,19 +345,20 @@ const TestPage = () => {
       const user = JSON.parse(localStorage.getItem('currentUser'));
       if (!user?.id) {
         handleUnauthorized();
-        return { success: false, message: 'User not authenticated' };
+        return;
       }
 
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
       const word = allWords.find(w => 
-        w.name.toLowerCase() === currentQuestion.correctAnswer.toLowerCase()
+        w.name?.toLowerCase() === currentQuestion?.correctAnswer?.toLowerCase()
       );
       
-      const lessonWord = lessonWords.find(lw => lw.wordId === word.id);
+      const lessonWord = lessonWords.find(lw => lw.wordId === word?.id);
       
       const payload = {
         userId: user.id,
         lessonId: parseInt(lessonId),
-        wordId: word.id,
+        wordId: word?.id || 0,
         questionType: getQuestionType(testType),
         isCorrect,
         lessonWordId: lessonWord?.id || 0
@@ -334,156 +375,24 @@ const TestPage = () => {
 
       if (response.status === 401) {
         handleUnauthorized();
-        return { success: false, message: 'Unauthorized' };
+        return;
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Ошибка HTTP! статус: ${response.status}`);
       }
 
       return await response.json();
       
     } catch (error) {
-      console.error('Error sending progress:', error);
-      return { success: false, error };
-    }
-  };
-
-  const sendTestResults = async () => {
-    const token = localStorage.getItem('userToken');
-    const user = JSON.parse(localStorage.getItem('currentUser'));
-    if (!user?.id) {
-      handleUnauthorized();
-      return { success: false, message: 'User not authenticated' };
-    }
-
-    const completedAt = new Date().toISOString();
-    const scorePercentage = Math.round((score / totalQuestions) * 100);
-
-    const payload = {
-      userId: user.id,
-      lessonId: parseInt(lessonId),
-      quizId: getQuestionType(testType),
-      score: scorePercentage,
-      completedAt,
-      learnedWords: score 
-    };
-
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return { success: false, message: 'Unauthorized' };
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error sending test results:', error);
-      return { success: false, error };
-    }
-  };
-
-  const startTest = () => {
-    if (totalQuestions === 0) {
-      alert(`Нет вопросов для теста. Доступно:
-      Изображения: ${testQuestions.image.length}
-      Аудио: ${testQuestions.audio.length}
-      Аудио+Изображение: ${testQuestions['audio-image'].length}
-      Правописание: ${testQuestions.spelling.length}`);
-      return;
-    }
-    
-    setShuffledQuestions([...shuffledQuestions].sort(() => 0.5 - Math.random()));
-    setTestStarted(true);
-    setTimerActive(true);
-    setCurrentQuestionIndex(0);
-    setScore(0);
-    setErrors(0);
-    setTime(0);
-    setShowResults(false);
-    setSelectedAnswer(null);
-    setQuestionTimeLeft(12);
-    setTimeExpired(false);
-  };
-
-  const handleTimeExpired = async () => {
-    setErrors(errors + 1);
-    await sendProgress(false);
-    setTimeout(goToNextQuestion, 2000);
-  };
-
-  const handleAnswerSelect = async (answer) => {
-    if (!currentQuestion || timeExpired) return;
-    
-    const isCorrect = answer === currentQuestion.correctAnswer;
-    setSelectedAnswer(answer);
-    
-    if (isCorrect) {
-      setScore(score + 1);
-    } else {
-      setErrors(errors + 1);
-    }
-    
-    await sendProgress(isCorrect);
-    setTimeout(goToNextQuestion, 2000);
-  };
-
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedAnswer(null);
-    } else {
-      finishTest();
-    }
-  };
-
-  const finishTest = async () => {
-    setTimerActive(false);
-    setShowResults(true);
-    
-    const currentScore = Math.round((score / totalQuestions) * 100);
-    const isNewRecord = currentScore > bestResults.score || 
-                      (currentScore === bestResults.score && time < bestResults.time);
-    
-    if (isNewRecord) {
-      setBestResults({ score: currentScore, time });
-    }
-
-    try {
-      await sendTestResults();
-      
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      if (user?.id) {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-stats/${user.id}/${lessonId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const updatedStats = await response.json();
-        setWordStats(updatedStats);
-      }
-    } catch (error) {
-      console.error('Error finishing test:', error);
+      console.error('Ошибка при отправке прогресса:', error);
     }
   };
 
   const getOptionClass = (option) => {
     if (!selectedAnswer && !timeExpired) return "option-btn";
     
-    const isCorrect = option === currentQuestion.correctAnswer;
+    const isCorrect = option === currentQuestion?.correctAnswer;
     const isSelected = option === selectedAnswer;
     
     if (timeExpired && isCorrect) return "option-btn correct-highlight";
@@ -491,6 +400,9 @@ const TestPage = () => {
     if (isSelected && !isCorrect) return "option-btn incorrect";
     return "option-btn";
   };
+
+  const currentQuestion = shuffledQuestions[currentQuestionIndex] || {};
+  const totalQuestions = shuffledQuestions.length;
 
   if (!isAuthenticated) {
     return null;
@@ -512,7 +424,7 @@ const TestPage = () => {
     );
   }
 
-  if (totalQuestions === 0 && !loading) {
+  if (testQuestions[testType].length === 0 && !loading) {
     return (
       <div className="test-page-wrapper">
         <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
@@ -545,25 +457,27 @@ const TestPage = () => {
               {!testStarted ? (
                 <StartScreen 
                   testType={testType}
-                  totalQuestions={totalQuestions}
+                  totalQuestions={testQuestions[testType].length}
                   quizData={quizData}
                   startTest={startTest}
                 />
               ) : showResults ? (
-                <ResultsScreen 
+                <ResultsImageScreen
                   score={score}
-                  totalQuestions={totalQuestions}
+                  totalQuestions={shuffledQuestions.length}
                   errors={errors}
                   time={time}
                   wordStats={wordStats}
                   startTest={startTest}
+                  lessonId={lessonId}
+                  testType="image"
                 />
               ) : (
                 <ActiveTestScreen
                   testType={testType}
                   currentQuestion={currentQuestion}
                   currentQuestionIndex={currentQuestionIndex}
-                  totalQuestions={totalQuestions}
+                  totalQuestions={shuffledQuestions.length}
                   questionTimeLeft={questionTimeLeft}
                   score={score}
                   errors={errors}
@@ -571,6 +485,8 @@ const TestPage = () => {
                   timeExpired={timeExpired}
                   handleAnswerSelect={handleAnswerSelect}
                   getOptionClass={getOptionClass}
+                  lessonId={lessonId}
+                  lessonTitle="Текущий урок" 
                 />
               )}
             </div>
@@ -581,6 +497,7 @@ const TestPage = () => {
                 testStarted={testStarted}
                 showResults={showResults}
                 wordStats={wordStats}
+                testResults={detailedProgress?.testResults || []}
                 quizData={quizData}
                 testQuestions={testQuestions}
                 hoveredCard={hoveredCard}
@@ -596,4 +513,4 @@ const TestPage = () => {
   );
 };
 
-export default TestPage;
+export default ImageTestPage;

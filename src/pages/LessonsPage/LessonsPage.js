@@ -7,7 +7,7 @@ import LessonHeader from '../../components/lessons/LessonHeader';
 import LessonContent from '../../components/lessons/LessonContent';
 import LessonPractice from '../../components/lessons/LessonPractice';
 import LessonQuizzes from '../../components/lessons/LessonQuizzes';
-import API_CONFIG from '../../components/src/config'; 
+import API_CONFIG from '../../components/src/config';
 import './LessonsPage.css';
 
 const LessonsPage = () => {
@@ -21,7 +21,6 @@ const LessonsPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Проверка авторизации
   useEffect(() => {
     const checkAuth = () => {
       const currentUser = localStorage.getItem('currentUser');
@@ -179,11 +178,11 @@ const LessonsPage = () => {
               />
             </div>
           </div>
-
           <LessonQuizzes 
             selectedTab={selectedTab}
             setSelectedTab={setSelectedTab}
             startQuiz={startQuiz}
+            lessonId={lessonId}
           />
         </Container>
       </div>

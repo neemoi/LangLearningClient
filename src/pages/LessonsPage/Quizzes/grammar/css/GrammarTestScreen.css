@@ -1,0 +1,61 @@
+.grammar-test .grammar-question-text {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.grammar-test .options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.grammar-test .grammar-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f5f5f5;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grammar-test .grammar-option:hover {
+  background: #e9e9e9;
+}
+
+.grammar-test .grammar-option.correct {
+  background: #e6f7e6;
+}
+
+.grammar-test .grammar-option.incorrect {
+  background: #fde8e8;
+}
+
+.grammar-test .option-radio {
+  margin-right: 1rem;
+}
+
+.grammar-test .radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grammar-test .radio-circle.selected {
+  border-color: #4a90e2;
+}
+
+.grammar-test .radio-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4a90e2;
+}

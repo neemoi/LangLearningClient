@@ -1,8 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './css/LessonQuizzes.css';
 
-const LessonQuizzes = ({ startQuiz }) => {
+const LessonQuizzes = ({ startQuiz, lessonId }) => {
   const [hoveredQuiz, setHoveredQuiz] = useState(null);
+  const [progressData, setProgressData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!lessonId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchProgressData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Получаем данные пользователя из localStorage
+        const currentUser = localStorage.getItem('currentUser');
+        const userToken = localStorage.getItem('userToken');
+
+        if (!currentUser || !userToken) {
+          throw new Error('Пользователь не авторизован');
+        }
+
+        // Парсим данные пользователя
+        let user;
+        try {
+          user = JSON.parse(currentUser);
+          if (!user?.id) {
+            throw new Error('Неверный формат данных пользователя');
+          }
+        } catch (e) {
+          throw new Error('Ошибка парсинга данных пользователя');
+        }
+
+        // Формируем запрос
+        const response = await fetch(
+          `https://localhost:7119/api/UserProgress/detailed/${user.id}/${lessonId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${userToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.status === 401) {
+          throw new Error('Требуется авторизация');
+        }
+
+        if (response.status === 404) {
+          setProgressData(null);
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setProgressData(data);
+      } catch (err) {
+        console.error('Error fetching progress data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgressData();
+  }, [lessonId]);
 
   const quizData = {
     nouns: [
@@ -18,37 +88,68 @@ const LessonQuizzes = ({ startQuiz }) => {
     ]
   };
 
+  const getScoreForTest = (testType) => {
+    if (!progressData?.testResults) return 0;
+    const test = progressData.testResults.find(t => t.testType === testType);
+    return test ? test.score : 0;
+  };
+
+  if (loading) {
+    return (
+      <div className="quiz-loading">
+        <div className="quiz-loading-spinner"></div>
+        <p>Загрузка данных прогресса...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="quiz-error">
+        <p>Ошибка: {error}</p>
+        <button 
+          className="quiz-retry-btn"
+          onClick={() => window.location.reload()}
+        >
+          Попробовать снова
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="quiz-main-container">
-      <div className="quiz-columns-container">
-        <div className="quiz-column left-column">
-          <div className="quiz-category-block noun-block">
-            <h3 className="category-title">Существительные</h3>
-            <div className="quiz-items-container">
+    <div className="quiz-wrapper">
+      <div className="quiz-columns">
+        <div className="quiz-column">
+          <div className="quiz-block">
+            <h3 className="quiz-title">Существительные</h3>
+            <div className="quiz-list">
               {quizData.nouns.map((quiz) => (
-                <QuizCircle 
+                <QuizItem
                   key={quiz.id}
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
                   setHoveredQuiz={setHoveredQuiz}
                   startQuiz={startQuiz}
+                  score={getScoreForTest(quiz.id)}
                 />
               ))}
             </div>
           </div>
         </div>
 
-        <div className="quiz-column right-column">
-          <div className="quiz-category-block grammar-block">
-            <h3 className="category-title">Грамматика</h3>
-            <div className="quiz-items-container">
+        <div className="quiz-column">
+          <div className="quiz-block">
+            <h3 className="quiz-title">Грамматика</h3>
+            <div className="quiz-list">
               {quizData.grammar.map((quiz) => (
-                <QuizCircle 
+                <QuizItem
                   key={quiz.id}
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
                   setHoveredQuiz={setHoveredQuiz}
                   startQuiz={startQuiz}
+                  score={getScoreForTest(quiz.id)}
                 />
               ))}
             </div>
@@ -59,20 +160,38 @@ const LessonQuizzes = ({ startQuiz }) => {
   );
 };
 
-const QuizCircle = ({ quiz, hoveredQuiz, setHoveredQuiz, startQuiz }) => (
-  <div 
-    className="quiz-item"
-    onClick={() => startQuiz(quiz.id)}
-    onMouseEnter={() => setHoveredQuiz(quiz.id)}
-    onMouseLeave={() => setHoveredQuiz(null)}
-  >
-    <div className="quiz-circle">
-      <img src={quiz.icon} alt="" className="quiz-image" />
+const QuizItem = ({ quiz, hoveredQuiz, setHoveredQuiz, startQuiz, score }) => {
+  const getProgressColor = (score) => {
+    if (score <= 30) return 'quiz-progress-red';
+    if (score <= 70) return 'quiz-progress-yellow';
+    return 'quiz-progress-green';
+  };
+
+  return (
+    <div
+      className={`quiz-item ${hoveredQuiz === quiz.id ? 'quiz-item-hovered' : ''}`}
+      onClick={() => startQuiz(quiz.id)}
+      onMouseEnter={() => setHoveredQuiz(quiz.id)}
+      onMouseLeave={() => setHoveredQuiz(null)}
+    >
+      <div className="quiz-icon-wrapper large">
+        <img src={quiz.icon} alt={quiz.tooltip} className="quiz-icon" />
+      </div>
+
+      <div className="quiz-progress-bar-bg large">
+        <div
+          className={`quiz-progress-bar-fill ${getProgressColor(score)}`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+
+      <div className="quiz-progress-text">{score}%</div>
+
+      {hoveredQuiz === quiz.id && (
+        <div className="quiz-tooltip">{quiz.tooltip}</div>
+      )}
     </div>
-    {hoveredQuiz === quiz.id && (
-      <div className="quiz-tooltip">{quiz.tooltip}</div>
-    )}
-  </div>
-);
+  );
+};
 
 export default LessonQuizzes;

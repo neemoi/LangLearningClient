@@ -1,0 +1,66 @@
+.test-navigation-header {
+  padding: 12px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.back-to-lesson-button {
+  background: none;
+  border: none;
+  color: #000000;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.back-to-lesson-button:hover {
+  background-color: #e8f0fe;
+  text-decoration: none;
+}
+
+.back-to-lesson-button:active {
+  color: #000000;
+  transform: translateY(1px);
+}
+
+.back-arrow {
+  margin-right: 8px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .test-navigation-header {
+    padding: 10px 15px;
+  }
+  
+  .back-to-lesson-button {
+    font-size: 15px;
+    padding: 5px 10px;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .back-to-lesson-button {
+    font-size: 14px;
+  }
+  
+  .back-arrow {
+    margin-right: 6px;
+  }
+}

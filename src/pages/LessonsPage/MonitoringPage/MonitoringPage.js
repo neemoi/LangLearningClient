@@ -114,12 +114,41 @@ const MonitoringPage = () => {
 
   const getWordStatus = (wordId) => {
     if (!data.progress?.words) return { attempts: 0, correct: 0, mastered: false };
+    
     const wordAttempts = data.progress.words.filter(w => w.wordId === wordId);
+    const correctAttempts = wordAttempts.filter(w => w.isCorrect);
+    
+    let mastered = false;
+    if (correctAttempts.length >= 3) {
+      const lastThree = wordAttempts.slice(-3);
+      mastered = lastThree.length === 3 && lastThree.every(w => w.isCorrect);
+    }
+    
     return {
       attempts: wordAttempts.length,
-      correct: wordAttempts.filter(w => w.isCorrect).length,
-      mastered: wordAttempts.length >= 3 && wordAttempts.slice(-3).every(w => w.isCorrect)
+      correct: correctAttempts.length,
+      mastered
     };
+  };
+
+  const getTestCompletionStatus = (wordId) => {
+    const testTypes = ['ImageAudioChoice', 'AudioChoice', 'ImageChoice', 'TextChoice'];
+    const status = {};
+    
+    if (!data.progress?.words) {
+      testTypes.forEach(type => status[type] = false);
+      return status;
+    }
+
+    const wordAttempts = data.progress.words.filter(w => w.wordId === wordId);
+    
+    testTypes.forEach(type => {
+      const typeAttempts = wordAttempts.filter(w => w.questionType === type);
+      const correctAttempts = typeAttempts.filter(w => w.isCorrect);
+      status[type] = correctAttempts.length >= 3; 
+    });
+
+    return status;
   };
 
   const handleBackClick = () => {
@@ -206,7 +235,7 @@ const MonitoringPage = () => {
             
             <WordProgressTable 
               words={data.words} 
-              getWordStatus={getWordStatus} 
+              getTestCompletionStatus={getTestCompletionStatus} 
             />
             
             <WordCards 
@@ -236,9 +265,6 @@ const Header = ({ title, score, completedAt }) => (
     <div className="header-content">
       <h1>{title}</h1>
       <div className="header-meta">
-        <div className={`score-badge ${score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low'}`}>
-          <span>{score}%</span>
-        </div>
         <div className="completion-date">
           {new Date(completedAt).toLocaleDateString('ru-RU', { 
             day: 'numeric', 
@@ -275,11 +301,87 @@ const ProgressLine = ({ title, description, current, total, color, icon }) => {
         <div className="progress-line-numbers">
           <span className="current-value">{current}</span>
           <span className="total-value">/{total}</span>
-          {window.innerWidth > 480 && (
-            <span className="percentage">({percentage}%)</span>
-          )}
+          <span className="percentage">({percentage}%)</span>
         </div>
       </div>
+    </div>
+  );
+};
+
+const WordProgressTable = ({ words, getTestCompletionStatus }) => {
+  const testTypes = [
+    { type: 'ImageAudioChoice', label: 'Аудио + Картинка' },
+    { type: 'AudioChoice', label: 'Аудио' },
+    { type: 'ImageChoice', label: 'Картинка' },
+    { type: 'TextChoice', label: 'Текст' }
+  ];
+
+  return (
+    <div className="progress-table-section">
+      <h2 className="section-title">Прогресс изучения</h2>
+      {words.length === 0 ? (
+        <NoDataScreen />
+      ) : (
+        <div className="table-container">
+          <table className="progress-table">
+            <thead>
+              <tr>
+                <th className="word-column">Слово</th>
+                {testTypes.map(test => (
+                  <th key={test.type} className="level-column" title={test.label}>
+                    {window.innerWidth > 768 ? test.label : test.label.split(' ')[0]}
+                  </th>
+                ))}
+                <th className="status-column">Статус</th>
+              </tr>
+            </thead>
+            <tbody>
+              {words.map((word) => {
+                const testStatus = getTestCompletionStatus(word.id);
+                const wordStatus = {
+                  mastered: Object.values(testStatus).every(status => status)
+                };
+
+                return (
+                  <tr key={word.id} className="progress-row">
+                    <td className="word-column">
+                      <div className="word-cell">
+                        <img 
+                          src={word.imageUrl || '/default-word.png'} 
+                          alt={word.name} 
+                          loading="lazy"
+                          className="word-image"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/default-word.png';
+                          }}
+                        />
+                        <span className="word-name">{word.name}</span>
+                      </div>
+                    </td>
+                    {testTypes.map(test => (
+                      <td key={test.type} className="level-column" title={test.label}>
+                        <div className={`level-indicator ${testStatus[test.type] ? 'completed' : ''}`}>
+                          {testStatus[test.type] ? (
+                            <span className="checkmark">✓</span>
+                          ) : (
+                            <span className="circle">○</span>
+                          )}
+                        </div>
+                      </td>
+                    ))}
+                    <td className="status-column">
+                      <div className={`status-indicator ${wordStatus.mastered ? 'mastered' : 'learning'}`}>
+                        {wordStatus.mastered ? 'Освоено' : 'Изучается'}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
@@ -317,72 +419,6 @@ const WordCards = ({ words, getWordStatus }) => (
             </div>
           );
         })}
-      </div>
-    )}
-  </div>
-);
-
-const WordProgressTable = ({ words, getWordStatus }) => (
-  <div className="progress-table-section">
-    <h2 className="section-title">Прогресс изучения</h2>
-    {words.length === 0 ? (
-      <NoDataScreen />
-    ) : (
-      <div className="table-container">
-        <table className="progress-table">
-          <thead>
-            <tr>
-              <th className="word-column">Слово</th>
-              <th className="level-column">1</th>
-              <th className="level-column">2</th>
-              <th className="level-column">3</th>
-              <th className="level-column">4</th>
-              <th className="status-column">Статус</th>
-            </tr>
-          </thead>
-          <tbody>
-            {words.map((word) => {
-              const status = getWordStatus(word.id);
-              const progressLevel = Math.min(Math.floor(status.correct / 3 * 4), 4);
-              
-              return (
-                <tr key={word.id} className="progress-row">
-                  <td className="word-column">
-                    <div className="word-cell">
-                      <img 
-                        src={word.imageUrl || '/default-word.png'} 
-                        alt={word.name} 
-                        loading="lazy"
-                        className="word-image"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/default-word.png';
-                        }}
-                      />
-                      <span className="word-name">{word.name}</span>
-                    </div>
-                  </td>
-                  {[1, 2, 3, 4].map((level) => (
-                    <td key={level} className="level-column">
-                      <div className={`level-indicator ${progressLevel >= level ? 'completed' : ''}`}>
-                        {progressLevel >= level ? (
-                          <span className="checkmark">✓</span>
-                        ) : (
-                          <span className="circle">○</span>
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                  <td className="status-column">
-                    <div className={`status-indicator ${status.mastered ? 'mastered' : 'learning'}`}>
-                      {status.mastered ? 'Освоено' : 'Изучается'}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
       </div>
     )}
   </div>

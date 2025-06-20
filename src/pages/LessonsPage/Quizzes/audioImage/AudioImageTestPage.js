@@ -1,0 +1,486 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Navigation from '../../../../components/layout/Navigation/Navigation';
+import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
+import TestSidebar from './../image/TestSidebar';
+import StartScreen from './../image/StartScreen';
+import ResultsScreen from './../audioImage/ResultsAudioImageScreen';
+import API_CONFIG from '../../../../components/src/config';
+import AudioImageTestScreen from '../../Quizzes/audioImage/AudioImageTestScreen';
+import EmptyTestState from '../../Quizzes/audioImage/EmptyTestState';
+import './../audioImage/css/AudioImageTestPage.css';
+
+const Loader = () => (
+  <div className="loader-container">
+    <div className="loader-spinner"></div>
+    <p>Загрузка теста...</p>
+  </div>
+);
+
+const AudioImageTestPage = () => {
+  const { lessonId } = useParams();
+  const navigate = useNavigate();
+  
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const [testStarted, setTestStarted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [errors, setErrors] = useState(0);
+  const [time, setTime] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(15);
+  const [timeExpired, setTimeExpired] = useState(false);
+  
+  const [testQuestions, setTestQuestions] = useState({
+    image: [], audio: [], 'audio-image': [], spelling: [], grammar: []
+  });
+  const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [allWords, setAllWords] = useState([]);
+  const [lessonWords, setLessonWords] = useState([]);
+  const [wordStats, setWordStats] = useState({
+    totalWordsInLesson: 0,
+    learnedWordsInLesson: 0,
+    totalWordsOverall: 0,
+    learnedWordsOverall: 0
+  });
+  const [testResults, setTestResults] = useState([]);
+
+  const quizData = {
+    nouns: [
+      { id: 'image', icon: 'https://winner.gfriend.com/Content/images/vc-but04.png', tooltip: 'Изображение/Текст' },
+      { id: 'audio', icon: 'https://winner.gfriend.com/Content/images/vc-but05.png', tooltip: 'Текст/Звукозапись' },
+      { id: 'audio-image', icon: 'https://winner.gfriend.com/Content/images/vc-but06.png', tooltip: 'Изображение/Звукозапись' },
+      { id: 'spelling', icon: 'https://winner.gfriend.com/Content/images/vc-but07.png', tooltip: 'Правописание/Печать' }
+    ],
+    grammar: [
+      { id: 'grammar', icon: 'https://winner.gfriend.com/Content/images/vc-but08.png', tooltip: 'Грамматика' }
+    ]
+  };
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const currentUser = localStorage.getItem('currentUser');
+      const userToken = localStorage.getItem('userToken');
+      
+      if (!currentUser || !userToken) {
+        navigate('/');
+        return false;
+      }
+      return true;
+    };
+
+    const authStatus = checkAuth();
+    setIsAuthenticated(authStatus);
+    
+    if (authStatus) {
+      fetchData();
+    }
+  }, [navigate, lessonId]);
+
+  useEffect(() => {
+    let interval;
+    if (timerActive) {
+      interval = setInterval(() => setTime(prev => prev + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
+  useEffect(() => {
+    let questionTimer;
+    if (testStarted && !showResults && questionTimeLeft > 0) {
+      questionTimer = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
+    } else if (questionTimeLeft === 0 && !timeExpired) {
+      setTimeExpired(true);
+      handleTimeExpired();
+    }
+    return () => clearInterval(questionTimer);
+  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      const [allWordsRes, lessonWordsRes, quizzesRes, wordStatsRes, progressRes] = await Promise.all([
+        fetch(`${API_CONFIG.BASE_URL}/api/Words`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/words`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/quizzes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-stats/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      if ([allWordsRes, lessonWordsRes, quizzesRes, wordStatsRes, progressRes].some(res => res.status === 401)) {
+        handleUnauthorized();
+        return;
+      }
+
+      const [allWordsData, lessonWordsData, quizzesData, wordStatsData, progressData] = await Promise.all([
+        allWordsRes.json(),
+        lessonWordsRes.json(),
+        quizzesRes.json(),
+        wordStatsRes.json(),
+        progressRes.ok ? progressRes.json() : { testResults: [] }
+      ]);
+      
+      setAllWords(allWordsData);
+      setLessonWords(lessonWordsData);
+      setTestQuestions(processQuestions(quizzesData, allWordsData, lessonWordsData));
+      setWordStats(wordStatsData);
+      setTestResults(progressData.testResults || []);
+      
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userToken');
+    navigate('/');
+  };
+
+  const processQuestions = (quizzesData, wordsData, lessonWordsData) => {
+    const result = { 
+      image: [], 
+      audio: [], 
+      'audio-image': [], 
+      spelling: [],
+      grammar: []
+    };
+
+    if (!quizzesData || !Array.isArray(quizzesData)) return result;
+    if (!wordsData || !Array.isArray(wordsData)) return result;
+
+    const wordsDict = wordsData.reduce((acc, word) => {
+      acc[word.id] = word;
+      acc[word.name.toLowerCase()] = word;
+      return acc;
+    }, {});
+
+    const lessonWordsDict = lessonWordsData?.reduce((acc, lw) => {
+      acc[lw.wordId] = lw;
+      return acc;
+    }, {}) || {};
+
+    quizzesData.forEach(quiz => {
+      if (!quiz.questions || !Array.isArray(quiz.questions)) return;
+
+      quiz.questions.forEach(question => {
+        try {
+          const normalizedAnswer = question.correctAnswer?.toLowerCase().trim();
+          const word = wordsDict[normalizedAnswer] || 
+                      Object.values(wordsDict).find(w => 
+                        w.name.toLowerCase() === normalizedAnswer);
+          
+          const lessonWord = word?.id ? lessonWordsDict[word.id] : null;
+
+          const processedQuestion = {
+            ...question,
+            wordId: word?.id,
+            lessonWordId: lessonWord?.id,
+            options: generateOptions(question.correctAnswer, wordsData, 4)
+          };
+
+          const qType = question.questionType?.toLowerCase();
+          if (qType.includes('audio') && qType.includes('image')) {
+            result['audio-image'].push(processedQuestion);
+          } else if (qType.includes('image')) {
+            result.image.push(processedQuestion);
+          } else if (qType.includes('audio')) {
+            result.audio.push(processedQuestion);
+          } else if (qType.includes('spelling')) {
+            result.spelling.push(processedQuestion);
+          } else if (qType.includes('grammar')) {
+            result.grammar.push(processedQuestion);
+          }
+        } catch (error) {
+          console.error('Error processing question:', question, error);
+        }
+      });
+    });
+
+    return result;
+  };
+
+  const generateOptions = (correctAnswer, wordsData, count = 4) => {
+    if (!wordsData?.length) return [correctAnswer];
+    
+    const otherWords = wordsData
+      .filter(word => word.name.toLowerCase() !== correctAnswer?.toLowerCase())
+      .map(word => word.name);
+    
+    const randomWords = [...otherWords]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, count - 1);
+    
+    return [...randomWords, correctAnswer].sort(() => 0.5 - Math.random());
+  };
+
+  useEffect(() => {
+    if (testQuestions['audio-image']?.length) {
+      setShuffledQuestions([...testQuestions['audio-image']].sort(() => 0.5 - Math.random()));
+    }
+  }, [testQuestions]);
+
+  const sendProgress = async (isCorrect) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      if (!user?.id) {
+        console.error('User not authenticated');
+        return;
+      }
+
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+      if (!currentQuestion?.wordId) {
+        console.error('Missing wordId for question:', currentQuestion);
+        return;
+      }
+
+      const payload = {
+        userId: user.id,
+        lessonId: parseInt(lessonId),
+        wordId: currentQuestion.wordId,
+        questionType: 3, // 3 = audio-image test
+        isCorrect,
+        lessonWordId: currentQuestion.lessonWordId || 0
+      };
+
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending progress:', error);
+    }
+  };
+
+  const updateTestResults = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setTestResults(data.testResults || []);
+      }
+    } catch (error) {
+      console.error('Error fetching updated test results:', error);
+    }
+  };
+
+  const startTest = () => {
+    if (shuffledQuestions.length === 0) {
+      alert(`Нет вопросов для теста. Доступно:
+      Аудио+Изображение: ${testQuestions['audio-image'].length}
+      Грамматика: ${testQuestions.grammar.length}`);
+      return;
+    }
+    
+    setTestStarted(true);
+    setTimerActive(true);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setErrors(0);
+    setTime(0);
+    setShowResults(false);
+    setSelectedImage(null);
+    setQuestionTimeLeft(15);
+    setTimeExpired(false);
+  };
+
+  const handleTimeExpired = async () => {
+    setErrors(prev => prev + 1);
+    await sendProgress(false);
+    setTimeout(goToNextQuestion, 2000);
+  };
+
+  const handleImageSelect = async (imageWord) => {
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion || timeExpired) return;
+    
+    const isCorrect = imageWord === currentQuestion.correctAnswer;
+    setSelectedImage(imageWord);
+    
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+    } else {
+      setErrors(prev => prev + 1);
+    }
+    
+    await sendProgress(isCorrect);
+    setTimeout(goToNextQuestion, 2000);
+  };
+
+  const getImageClass = (imageWord) => {
+    if (!selectedImage && !timeExpired) return '';
+    
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    const isCorrect = imageWord === currentQuestion.correctAnswer;
+    const isSelected = imageWord === selectedImage;
+    
+    if (timeExpired && isCorrect) return 'correct-highlight';
+    if (isCorrect && (selectedImage || timeExpired)) return 'correct';
+    if (isSelected && !isCorrect) return 'incorrect';
+    return '';
+  };
+
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedImage(null);
+      setQuestionTimeLeft(15);
+      setTimeExpired(false);
+    } else {
+      finishTest();
+    }
+  };
+
+  const finishTest = async () => {
+    setTimerActive(false);
+    setShowResults(true);
+    await updateTestResults();
+    await fetchData();
+  };
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="test-page-wrapper">
+        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+        <div className="content-wrapper">
+          <Sidebar isOpen={sidebarOpen} />
+          <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+            <div className="test-container loading-state">
+              <Loader />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (shuffledQuestions.length === 0 && !loading) {
+    return (
+      <div className="test-page-wrapper">
+        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+        <div className="content-wrapper">
+          <Sidebar isOpen={sidebarOpen} />
+          <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+            <div className="test-container empty-state">
+              <EmptyTestState 
+                testQuestions={testQuestions} 
+                lessonId={lessonId} 
+                navigate={navigate} 
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="test-page-wrapper">
+      <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+      
+      <div className="content-wrapper">
+        <Sidebar isOpen={sidebarOpen} />
+        
+        <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
+          <div className={`test-container ${testStarted && !showResults ? 'test-active' : ''}`}>
+            <div className="test-main-content">
+              {!testStarted ? (
+                <StartScreen 
+                  testType="audio-image"
+                  totalQuestions={shuffledQuestions.length}
+                  quizData={quizData}
+                  startTest={startTest}
+                />
+              ) : showResults ? (
+                <ResultsScreen 
+                  score={score}
+                  totalQuestions={shuffledQuestions.length}
+                  errors={errors}
+                  time={time}
+                  wordStats={wordStats}
+                  startTest={startTest}
+                  lessonId={lessonId}
+                />
+              ) : (
+                <AudioImageTestScreen
+                  currentQuestion={shuffledQuestions[currentQuestionIndex]}
+                  currentQuestionIndex={currentQuestionIndex}
+                  totalQuestions={shuffledQuestions.length}
+                  questionTimeLeft={questionTimeLeft}
+                  score={score}
+                  errors={errors}
+                  selectedAnswer={selectedImage}
+                  timeExpired={timeExpired}
+                  handleAnswerSelect={handleImageSelect}
+                  getOptionClass={getImageClass}
+                  allWords={allWords}
+                />
+              )}
+            </div>
+
+            {(!testStarted || showResults) && (
+              <TestSidebar
+                testType="audio-image"
+                testStarted={testStarted}
+                showResults={showResults}
+                wordStats={wordStats}
+                quizData={quizData}
+                testQuestions={testQuestions}
+                navigate={navigate}
+                lessonId={lessonId}
+                testResults={testResults}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AudioImageTestPage;

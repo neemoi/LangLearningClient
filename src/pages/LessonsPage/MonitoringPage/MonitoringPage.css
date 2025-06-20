@@ -1,5 +1,5 @@
 :root {
-  --primary: #4361ee;
+  --primary: #434343;
   --secondary: #3f37c9;
   --success: #4cc9f0;
   --warning: #f8961e;
@@ -234,6 +234,15 @@ th {
   color: var(--dark);
 }
 
+.word-column {
+  min-width: 160px;
+}
+
+.level-column {
+  min-width: 80px;
+  text-align: center;
+}
+
 .word-cell {
   display: flex;
   align-items: center;
@@ -248,7 +257,7 @@ th {
   background-color: #f8f9fa;
 }
 
-.progress-level {
+.level-indicator {
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -261,27 +270,38 @@ th {
   color: var(--gray);
 }
 
-.progress-level.completed {
-  background-color: var(--success);
+.level-indicator.completed {
+  background-color: #e1f8ff;
   color: white;
 }
 
-.status-badge {
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
+.status-indicator {
   display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
-.status-badge.mastered {
+.status-indicator.mastered {
   background-color: #e6f7ee;
   color: #28a745;
 }
 
-.status-badge.learning {
+.status-indicator.learning {
   background-color: #fff3cd;
   color: #856404;
+}
+
+.circle {
+  color: #ddd;
+  font-size: 0.9em;
+}
+
+.checkmark {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 
 .word-cards-section {
@@ -355,66 +375,27 @@ th {
   text-overflow: ellipsis;
 }
 
-.memory-stats-section {
-  background-color: var(--white);
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
+.word-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
 }
 
-.memory-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.memory-stat-card {
-  text-align: center;
-  padding: 1.25rem;
-  border-radius: 10px;
+.status-dot.mastered {
+  background-color: #28a745;
 }
 
-.memory-stat-card.accuracy {
-  background-color: rgba(75, 192, 192, 0.08);
-  border: 1px solid rgba(75, 192, 192, 0.15);
-}
-
-.memory-stat-card.mastery {
-  background-color: rgba(54, 162, 235, 0.08);
-  border: 1px solid rgba(54, 162, 235, 0.15);
-}
-
-.stat-icon {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.accuracy .stat-value {
-  color: #4bc0c0;
-}
-
-.mastery .stat-value {
-  color: #36a2eb;
-}
-
-.stat-label {
-  font-size: 0.95rem;
-  color: var(--dark);
-  margin-bottom: 0.25rem;
-  font-weight: 500;
-}
-
-.stat-details {
-  font-size: 0.85rem;
-  color: var(--gray);
-  opacity: 0.9;
+.status-dot.learning {
+  background-color: #ffc107;
 }
 
 .resources-section {
@@ -579,9 +560,10 @@ th {
   to { transform: rotate(360deg); }
 }
 
+/* Адаптация для названий тестов */
 @media (max-width: 992px) {
-  .memory-stats-grid {
-    grid-template-columns: 1fr;
+  .level-column {
+    min-width: 70px;
   }
 }
 
@@ -622,6 +604,11 @@ th {
   table {
     min-width: 600px;
   }
+  
+  .level-column {
+    min-width: 60px;
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 576px) {
@@ -637,6 +624,12 @@ th {
   
   .back-button {
     font-size: 0.9rem;
+  }
+  
+  .level-column {
+    min-width: 50px;
+    font-size: 0.75rem;
+    padding: 0.5rem;
   }
 }
 
@@ -657,14 +650,6 @@ th {
     font-size: 0.8rem;
   }
   
-  .stat-value {
-    font-size: 1.4rem;
-  }
-  
-  .stat-label {
-    font-size: 0.9rem;
-  }
-  
   .progress-line-header {
     gap: 0.75rem;
   }
@@ -678,59 +663,14 @@ th {
   .completion-date {
     font-size: 0.8rem;
   }
-}
-
-.status-indicator.learning {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.status-indicator.mastered {
-  background-color: #e6f7ee;
-  color: #28a745;
-}
-
-.status-indicator {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.circle {
-  color: #ddd;
-  font-size: 0.9em;
-}
-
-.checkmark {
-  color: #28a745;
-  font-weight: bold;
-  font-size: 1.1em;
-}
-
-.back-button {
-  background: none;
-  border: none;
-  color: #333; 
-  font-size: 0.95rem;
-  padding: 0.5rem 0;
-  margin-bottom: 1rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.back-button:hover {
-  color: #000; 
-  text-decoration: none;
-}
-
-.back-arrow {
-  font-size: 1.1rem;
-  margin-right: 4px;
+  
+  .level-column {
+    min-width: 40px;
+    font-size: 0;
+  }
+  
+  .level-column::before {
+    content: attr(data-short);
+    font-size: 0.7rem;
+  }
 }

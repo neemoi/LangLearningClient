@@ -440,7 +440,7 @@
   font-weight: 500;
   color: rgb(0, 0, 0);
   z-index: 1;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* Добавляем тень для лучшей читаемости */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); 
 }
 .stats-container {
   display: flex;

@@ -20,12 +20,13 @@ import KidLessonDetail from './components/admin/kid-lessons/kiLessonDetail';
 import LessonsPage from './pages/LessonsPage/LessonsPage';
 import WordsPage from './pages/LessonsPage/WordsPage/WordsPage';
 import PhrasesPage from './pages/LessonsPage/PhrasesPage/PhrasesPage';
-import ImageTestPage from './pages/LessonsPage/Quizzes/ImageTestPage';
+import ImageTestPage from './pages/LessonsPage/Quizzes/image/ImageTestPage';
 import MonitoringPage from './pages/LessonsPage/MonitoringPage/MonitoringPage';
+import AudioTestPage from './pages/LessonsPage/Quizzes/audio/AudioTestPage';
+import AudioImageTestPage from './pages/LessonsPage/Quizzes/audioImage/AudioImageTestPage';
+import SpellingTestPage from './pages/LessonsPage/Quizzes/spelling/SpellingTestPage';
+import GrammarTestPage from './pages/LessonsPage/Quizzes/grammar/GrammarTestPage';
 
-        //<Route path="/lessonsVirtual/:lessonId/audio-test" element={<AudioTestPage />} />
-        //<Route path="/lessonsVirtual/:lessonId/audio-image-test" element={<AudioImageTestPage />} />
-        //<Route path="/lessonsVirtual/:lessonId/spelling-test" element={<SpellingTestPage />} />
 
 function App() {
   return (
@@ -45,6 +46,10 @@ function App() {
         <Route path="/lessonsVirtual/:lessonId" element={<LessonsPage />} />
         <Route path="/monitoring/:lessonId" element={<MonitoringPage />} />
         <Route path="/lessonsVirtual/:lessonId/image-test" element={<ImageTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/audio-test" element={<AudioTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/audio-image-test" element={<AudioImageTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/spelling-test" element={<SpellingTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/grammar-test" element={<GrammarTestPage />} />
         <Route path="/admin" element={<AdminPage />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UsersManagement />} />
