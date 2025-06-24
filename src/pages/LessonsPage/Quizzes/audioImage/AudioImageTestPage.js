@@ -1,14 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
 import TestSidebar from './../image/TestSidebar';
 import StartScreen from './../image/StartScreen';
-import ResultsScreen from './../audioImage/ResultsAudioImageScreen';
-import API_CONFIG from '../../../../components/src/config';
+import ResultsTestScreen from './../audioImage/ResultsAudioImageScreen';
 import AudioImageTestScreen from '../../Quizzes/audioImage/AudioImageTestScreen';
 import EmptyTestState from '../../Quizzes/audioImage/EmptyTestState';
+import API_CONFIG from '../../../../components/src/config';
 import './../audioImage/css/AudioImageTestPage.css';
+
+const TEST_TYPES = {
+  IMAGE: 'image',
+  AUDIO: 'audio',
+  AUDIO_IMAGE: 'audio-image',
+  SPELLING: 'spelling',
+  GRAMMAR: 'grammar',
+  PRONUNCIATION: 'pronunciation',
+  ADVANCED: 'advanced-test'
+};
+
+const DEFAULT_QUIZ_DATA = {
+  nouns: [
+    {
+      id: TEST_TYPES.IMAGE,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but04.png',
+      tooltip: 'Изображение/Текст'
+    },
+    {
+      id: TEST_TYPES.AUDIO,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but05.png',
+      tooltip: 'Текст/Звукозапись'
+    },
+    {
+      id: TEST_TYPES.AUDIO_IMAGE,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but06.png',
+      tooltip: 'Изображение/Звукозапись'
+    },
+    {
+      id: TEST_TYPES.SPELLING,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but07.png',
+      tooltip: 'Правописание'
+    },
+    {
+      id: TEST_TYPES.GRAMMAR,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but08.png',
+      tooltip: 'Грамматика'
+    },
+    {
+      id: TEST_TYPES.PRONUNCIATION,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but09.png',
+      tooltip: 'Произношение'
+    },
+    {
+      id: TEST_TYPES.ADVANCED,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but10.png',
+      tooltip: 'Продвинутый тест'
+    }
+  ]
+};
 
 const Loader = () => (
   <div className="loader-container">
@@ -24,7 +74,6 @@ const AudioImageTestPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
   const [testStarted, setTestStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -35,9 +84,14 @@ const AudioImageTestPage = () => {
   const [showResults, setShowResults] = useState(false);
   const [questionTimeLeft, setQuestionTimeLeft] = useState(15);
   const [timeExpired, setTimeExpired] = useState(false);
-  
   const [testQuestions, setTestQuestions] = useState({
-    image: [], audio: [], 'audio-image': [], spelling: [], grammar: []
+    [TEST_TYPES.IMAGE]: [],
+    [TEST_TYPES.AUDIO]: [],
+    [TEST_TYPES.AUDIO_IMAGE]: [],
+    [TEST_TYPES.SPELLING]: [],
+    [TEST_TYPES.GRAMMAR]: [],
+    [TEST_TYPES.PRONUNCIATION]: [],
+    [TEST_TYPES.ADVANCED]: []
   });
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [allWords, setAllWords] = useState([]);
@@ -50,23 +104,33 @@ const AudioImageTestPage = () => {
   });
   const [testResults, setTestResults] = useState([]);
 
-  const quizData = {
-    nouns: [
-      { id: 'image', icon: 'https://winner.gfriend.com/Content/images/vc-but04.png', tooltip: 'Изображение/Текст' },
-      { id: 'audio', icon: 'https://winner.gfriend.com/Content/images/vc-but05.png', tooltip: 'Текст/Звукозапись' },
-      { id: 'audio-image', icon: 'https://winner.gfriend.com/Content/images/vc-but06.png', tooltip: 'Изображение/Звукозапись' },
-      { id: 'spelling', icon: 'https://winner.gfriend.com/Content/images/vc-but07.png', tooltip: 'Правописание/Печать' }
-    ],
-    grammar: [
-      { id: 'grammar', icon: 'https://winner.gfriend.com/Content/images/vc-but08.png', tooltip: 'Грамматика' }
-    ]
-  };
+  useEffect(() => {
+    let interval;
+    if (timerActive) {
+      interval = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
+  useEffect(() => {
+    let questionInterval;
+    if (testStarted && !showResults && questionTimeLeft > 0) {
+      questionInterval = setInterval(() => {
+        setQuestionTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (questionTimeLeft === 0 && !timeExpired) {
+      setTimeExpired(true);
+      handleTimeExpired();
+    }
+    return () => clearInterval(questionInterval);
+  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
 
   useEffect(() => {
     const checkAuth = () => {
       const currentUser = localStorage.getItem('currentUser');
       const userToken = localStorage.getItem('userToken');
-      
       if (!currentUser || !userToken) {
         navigate('/');
         return false;
@@ -76,30 +140,8 @@ const AudioImageTestPage = () => {
 
     const authStatus = checkAuth();
     setIsAuthenticated(authStatus);
-    
-    if (authStatus) {
-      fetchData();
-    }
+    if (authStatus) fetchData();
   }, [navigate, lessonId]);
-
-  useEffect(() => {
-    let interval;
-    if (timerActive) {
-      interval = setInterval(() => setTime(prev => prev + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timerActive]);
-
-  useEffect(() => {
-    let questionTimer;
-    if (testStarted && !showResults && questionTimeLeft > 0) {
-      questionTimer = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
-    } else if (questionTimeLeft === 0 && !timeExpired) {
-      setTimeExpired(true);
-      handleTimeExpired();
-    }
-    return () => clearInterval(questionTimer);
-  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
 
   const fetchData = async () => {
     try {
@@ -125,11 +167,6 @@ const AudioImageTestPage = () => {
         })
       ]);
 
-      if ([allWordsRes, lessonWordsRes, quizzesRes, wordStatsRes, progressRes].some(res => res.status === 401)) {
-        handleUnauthorized();
-        return;
-      }
-
       const [allWordsData, lessonWordsData, quizzesData, wordStatsData, progressData] = await Promise.all([
         allWordsRes.json(),
         lessonWordsRes.json(),
@@ -138,12 +175,16 @@ const AudioImageTestPage = () => {
         progressRes.ok ? progressRes.json() : { testResults: [] }
       ]);
       
-      setAllWords(allWordsData);
-      setLessonWords(lessonWordsData);
+      setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
+      setLessonWords(Array.isArray(lessonWordsData) ? lessonWordsData : []);
       setTestQuestions(processQuestions(quizzesData, allWordsData, lessonWordsData));
-      setWordStats(wordStatsData);
+      setWordStats(wordStatsData || {
+        totalWordsInLesson: 0,
+        learnedWordsInLesson: 0,
+        totalWordsOverall: 0,
+        learnedWordsOverall: 0
+      });
       setTestResults(progressData.testResults || []);
-      
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -151,23 +192,16 @@ const AudioImageTestPage = () => {
     }
   };
 
-  const handleUnauthorized = () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userToken');
-    navigate('/');
-  };
-
   const processQuestions = (quizzesData, wordsData, lessonWordsData) => {
-    const result = { 
-      image: [], 
-      audio: [], 
-      'audio-image': [], 
-      spelling: [],
-      grammar: []
+    const result = {
+      [TEST_TYPES.IMAGE]: [],
+      [TEST_TYPES.AUDIO]: [],
+      [TEST_TYPES.AUDIO_IMAGE]: [],
+      [TEST_TYPES.SPELLING]: [],
+      [TEST_TYPES.GRAMMAR]: [],
+      [TEST_TYPES.PRONUNCIATION]: [],
+      [TEST_TYPES.ADVANCED]: []
     };
-
-    if (!quizzesData || !Array.isArray(quizzesData)) return result;
-    if (!wordsData || !Array.isArray(wordsData)) return result;
 
     const wordsDict = wordsData.reduce((acc, word) => {
       acc[word.id] = word;
@@ -181,38 +215,36 @@ const AudioImageTestPage = () => {
     }, {}) || {};
 
     quizzesData.forEach(quiz => {
-      if (!quiz.questions || !Array.isArray(quiz.questions)) return;
+      quiz.questions?.forEach(question => {
+        const normalizedAnswer = question.correctAnswer?.toLowerCase().trim();
+        const word = wordsDict[normalizedAnswer] || 
+                    Object.values(wordsDict).find(w => 
+                      w.name.toLowerCase() === normalizedAnswer);
+        
+        const lessonWord = word?.id ? lessonWordsDict[word.id] : null;
 
-      quiz.questions.forEach(question => {
-        try {
-          const normalizedAnswer = question.correctAnswer?.toLowerCase().trim();
-          const word = wordsDict[normalizedAnswer] || 
-                      Object.values(wordsDict).find(w => 
-                        w.name.toLowerCase() === normalizedAnswer);
-          
-          const lessonWord = word?.id ? lessonWordsDict[word.id] : null;
+        const processedQuestion = {
+          ...question,
+          wordId: word?.id,
+          lessonWordId: lessonWord?.id,
+          options: generateOptions(question.correctAnswer, wordsData, 4)
+        };
 
-          const processedQuestion = {
-            ...question,
-            wordId: word?.id,
-            lessonWordId: lessonWord?.id,
-            options: generateOptions(question.correctAnswer, wordsData, 4)
-          };
-
-          const qType = question.questionType?.toLowerCase();
-          if (qType.includes('audio') && qType.includes('image')) {
-            result['audio-image'].push(processedQuestion);
-          } else if (qType.includes('image')) {
-            result.image.push(processedQuestion);
-          } else if (qType.includes('audio')) {
-            result.audio.push(processedQuestion);
-          } else if (qType.includes('spelling')) {
-            result.spelling.push(processedQuestion);
-          } else if (qType.includes('grammar')) {
-            result.grammar.push(processedQuestion);
-          }
-        } catch (error) {
-          console.error('Error processing question:', question, error);
+        const qType = question.questionType?.toLowerCase();
+        if (qType.includes('audio') && qType.includes('image')) {
+          result[TEST_TYPES.AUDIO_IMAGE].push(processedQuestion);
+        } else if (qType.includes('image')) {
+          result[TEST_TYPES.IMAGE].push(processedQuestion);
+        } else if (qType.includes('audio')) {
+          result[TEST_TYPES.AUDIO].push(processedQuestion);
+        } else if (qType.includes('spelling')) {
+          result[TEST_TYPES.SPELLING].push(processedQuestion);
+        } else if (qType.includes('grammar')) {
+          result[TEST_TYPES.GRAMMAR].push(processedQuestion);
+        } else if (qType.includes('pronunciation')) {
+          result[TEST_TYPES.PRONUNCIATION].push(processedQuestion);
+        } else if (qType.includes('advanced')) {
+          result[TEST_TYPES.ADVANCED].push(processedQuestion);
         }
       });
     });
@@ -235,8 +267,8 @@ const AudioImageTestPage = () => {
   };
 
   useEffect(() => {
-    if (testQuestions['audio-image']?.length) {
-      setShuffledQuestions([...testQuestions['audio-image']].sort(() => 0.5 - Math.random()));
+    if (testQuestions[TEST_TYPES.AUDIO_IMAGE]?.length) {
+      setShuffledQuestions([...testQuestions[TEST_TYPES.AUDIO_IMAGE]].sort(() => 0.5 - Math.random()));
     }
   }, [testQuestions]);
 
@@ -245,17 +277,7 @@ const AudioImageTestPage = () => {
       const token = localStorage.getItem('userToken');
       const user = JSON.parse(localStorage.getItem('currentUser'));
       
-      if (!user?.id) {
-        console.error('User not authenticated');
-        return;
-      }
-
       const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      if (!currentQuestion?.wordId) {
-        console.error('Missing wordId for question:', currentQuestion);
-        return;
-      }
-
       const payload = {
         userId: user.id,
         lessonId: parseInt(lessonId),
@@ -265,7 +287,7 @@ const AudioImageTestPage = () => {
         lessonWordId: currentQuestion.lessonWordId || 0
       };
 
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -273,12 +295,6 @@ const AudioImageTestPage = () => {
         },
         body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
     } catch (error) {
       console.error('Error sending progress:', error);
     }
@@ -306,10 +322,10 @@ const AudioImageTestPage = () => {
   };
 
   const startTest = () => {
-    if (shuffledQuestions.length === 0) {
+    if (testQuestions[TEST_TYPES.AUDIO_IMAGE].length === 0) {
       alert(`Нет вопросов для теста. Доступно:
-      Аудио+Изображение: ${testQuestions['audio-image'].length}
-      Грамматика: ${testQuestions.grammar.length}`);
+      Аудио+Изображение: ${testQuestions[TEST_TYPES.AUDIO_IMAGE].length}
+      Продвинутый тест: ${testQuestions[TEST_TYPES.ADVANCED].length}`);
       return;
     }
     
@@ -352,7 +368,7 @@ const AudioImageTestPage = () => {
     if (!selectedImage && !timeExpired) return '';
     
     const currentQuestion = shuffledQuestions[currentQuestionIndex];
-    const isCorrect = imageWord === currentQuestion.correctAnswer;
+    const isCorrect = imageWord === currentQuestion?.correctAnswer;
     const isSelected = imageWord === selectedImage;
     
     if (timeExpired && isCorrect) return 'correct-highlight';
@@ -376,17 +392,25 @@ const AudioImageTestPage = () => {
     setTimerActive(false);
     setShowResults(true);
     await updateTestResults();
-    await fetchData();
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
+
+  const navigateToTest = (testId) => {
+    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
+  };
+
+  const currentQuestion = shuffledQuestions[currentQuestionIndex] || {};
+  const totalQuestions = shuffledQuestions.length;
+
+  if (!isAuthenticated) return null;
 
   if (loading) {
     return (
       <div className="test-page-wrapper">
-        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+        <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
         <div className="content-wrapper">
           <Sidebar isOpen={sidebarOpen} />
           <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
@@ -399,10 +423,10 @@ const AudioImageTestPage = () => {
     );
   }
 
-  if (shuffledQuestions.length === 0 && !loading) {
+  if (testQuestions[TEST_TYPES.AUDIO_IMAGE].length === 0 && !loading) {
     return (
       <div className="test-page-wrapper">
-        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+        <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
         <div className="content-wrapper">
           <Sidebar isOpen={sidebarOpen} />
           <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
@@ -421,7 +445,7 @@ const AudioImageTestPage = () => {
 
   return (
     <div className="test-page-wrapper">
-      <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
+      <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
       
       <div className="content-wrapper">
         <Sidebar isOpen={sidebarOpen} />
@@ -431,13 +455,13 @@ const AudioImageTestPage = () => {
             <div className="test-main-content">
               {!testStarted ? (
                 <StartScreen 
-                  testType="audio-image"
-                  totalQuestions={shuffledQuestions.length}
-                  quizData={quizData}
+                  testType={TEST_TYPES.AUDIO_IMAGE}
+                  totalQuestions={testQuestions[TEST_TYPES.AUDIO_IMAGE].length}
+                  quizData={DEFAULT_QUIZ_DATA}
                   startTest={startTest}
                 />
               ) : showResults ? (
-                <ResultsScreen 
+                <ResultsTestScreen
                   score={score}
                   totalQuestions={shuffledQuestions.length}
                   errors={errors}
@@ -445,12 +469,13 @@ const AudioImageTestPage = () => {
                   wordStats={wordStats}
                   startTest={startTest}
                   lessonId={lessonId}
+                  testType={TEST_TYPES.AUDIO_IMAGE}
                 />
               ) : (
                 <AudioImageTestScreen
-                  currentQuestion={shuffledQuestions[currentQuestionIndex]}
+                  currentQuestion={currentQuestion}
                   currentQuestionIndex={currentQuestionIndex}
-                  totalQuestions={shuffledQuestions.length}
+                  totalQuestions={totalQuestions}
                   questionTimeLeft={questionTimeLeft}
                   score={score}
                   errors={errors}
@@ -465,13 +490,13 @@ const AudioImageTestPage = () => {
 
             {(!testStarted || showResults) && (
               <TestSidebar
-                testType="audio-image"
+                testType={TEST_TYPES.AUDIO_IMAGE}
                 testStarted={testStarted}
                 showResults={showResults}
                 wordStats={wordStats}
-                quizData={quizData}
+                quizData={DEFAULT_QUIZ_DATA}
                 testQuestions={testQuestions}
-                navigate={navigate}
+                navigateToTest={navigateToTest}
                 lessonId={lessonId}
                 testResults={testResults}
               />

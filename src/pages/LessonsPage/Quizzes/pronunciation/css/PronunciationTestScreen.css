@@ -1,0 +1,138 @@
+.pronunciation-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.question-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.pronunciation-question-text {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #333;
+  font-weight: 500;
+}
+
+.audio-play-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #4a90e2;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.audio-play-button:hover {
+  background: #3a7bc8;
+  transform: scale(1.05);
+}
+
+.audio-play-button.playing {
+  background: #ff4757;
+}
+
+.audio-play-button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.audio-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.pronunciation-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.pronunciation-option {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e0e0e0;
+}
+
+.pronunciation-option:hover {
+  background: #e9ecef;
+}
+
+.option-radio {
+  margin-right: 1rem;
+}
+
+.radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #adb5bd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.radio-circle.selected {
+  border-color: #4a90e2;
+  background-color: #4a90e2;
+}
+
+.radio-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+}
+
+.option-text {
+  flex-grow: 1;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.pronunciation-option.correct {
+  background-color: #e6f7e6;
+  border-color: #a3e8a3;
+}
+
+.pronunciation-option.incorrect {
+  background-color: #fde8e8;
+  border-color: #f8b8b8;
+}
+
+.pronunciation-option.selected {
+  background-color: #e3f0ff;
+  border-color: #4a90e2;
+}
+
+.pronunciation-option.selected.correct {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+@media (max-width: 480px) {
+  .pronunciation-question-text {
+    font-size: 1.1rem;
+  }
+  
+  .pronunciation-option {
+    padding: 0.7rem 0.9rem;
+  }
+}

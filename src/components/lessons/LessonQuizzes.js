@@ -18,7 +18,6 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
         setLoading(true);
         setError(null);
 
-        // Получаем данные пользователя из localStorage
         const currentUser = localStorage.getItem('currentUser');
         const userToken = localStorage.getItem('userToken');
 
@@ -26,18 +25,11 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
           throw new Error('Пользователь не авторизован');
         }
 
-        // Парсим данные пользователя
-        let user;
-        try {
-          user = JSON.parse(currentUser);
-          if (!user?.id) {
-            throw new Error('Неверный формат данных пользователя');
-          }
-        } catch (e) {
-          throw new Error('Ошибка парсинга данных пользователя');
+        const user = JSON.parse(currentUser);
+        if (!user?.id) {
+          throw new Error('Неверный формат данных пользователя');
         }
 
-        // Формируем запрос
         const response = await fetch(
           `https://localhost:7119/api/UserProgress/detailed/${user.id}/${lessonId}`,
           {
@@ -47,15 +39,6 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
             }
           }
         );
-
-        if (response.status === 401) {
-          throw new Error('Требуется авторизация');
-        }
-
-        if (response.status === 404) {
-          setProgressData(null);
-          return;
-        }
 
         if (!response.ok) {
           throw new Error(`Ошибка сервера: ${response.status}`);
@@ -90,8 +73,23 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
 
   const getScoreForTest = (testType) => {
     if (!progressData?.testResults) return 0;
-    const test = progressData.testResults.find(t => t.testType === testType);
-    return test ? test.score : 0;
+    
+    const serverTestTypes = {
+      'image': 'image',
+      'audio': 'audio',
+      'audio-image': 'audio-image',
+      'spelling': 'spelling',
+      'grammar': 'grammar',
+      'pronunciation': 'pronunciation',
+      'advanced': 'advanced-test'
+    };
+
+    const serverTestType = serverTestTypes[testType];
+    const testResult = progressData.testResults.find(t => t.testType === serverTestType);
+    
+    if (!testResult) return 0;
+    
+    return testResult.score <= 1 ? Math.round(testResult.score * 100) : Math.round(testResult.score);
   };
 
   if (loading) {
@@ -130,7 +128,7 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
                   setHoveredQuiz={setHoveredQuiz}
-                  startQuiz={startQuiz}
+                  startQuiz={() => startQuiz(quiz.id)}
                   score={getScoreForTest(quiz.id)}
                 />
               ))}
@@ -148,7 +146,7 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
                   setHoveredQuiz={setHoveredQuiz}
-                  startQuiz={startQuiz}
+                  startQuiz={() => startQuiz(quiz.id)}
                   score={getScoreForTest(quiz.id)}
                 />
               ))}
@@ -170,7 +168,7 @@ const QuizItem = ({ quiz, hoveredQuiz, setHoveredQuiz, startQuiz, score }) => {
   return (
     <div
       className={`quiz-item ${hoveredQuiz === quiz.id ? 'quiz-item-hovered' : ''}`}
-      onClick={() => startQuiz(quiz.id)}
+      onClick={startQuiz}
       onMouseEnter={() => setHoveredQuiz(quiz.id)}
       onMouseLeave={() => setHoveredQuiz(null)}
     >

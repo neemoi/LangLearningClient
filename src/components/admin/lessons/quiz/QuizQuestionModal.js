@@ -95,10 +95,10 @@ const QUESTION_TYPES = [
     label: 'Произношение',
     icon: <FaMicrophone className="me-2" />,
     description: 'Проверка правильного произношения',
-    requiresText: true,
+    requiresText: false,
     requiresImage: false,
     requiresAudio: false,
-    requiresAnswers: false,
+    requiresAnswers: true,
     requiresCorrectAnswer: true
   },
   {
@@ -208,8 +208,8 @@ const QuizQuestionModal = ({
       } else if (!formData.answers.some(a => a.isCorrect)) {
         newErrors.answers = 'Необходимо указать один правильный вариант ответа';
       } else if (formData.answers.filter(a => a.isCorrect).length > 1 && 
-                 formData.questionType === 'grammar_selection') {
-        newErrors.answers = 'Для грамматики допускается только один правильный ответ';
+                 (formData.questionType === 'grammar_selection' || formData.questionType === 'pronunciation')) {
+        newErrors.answers = 'Допускается только один правильный ответ';
       }
     } else if (currentQuestionType.requiresCorrectAnswer && !formData.correctAnswer.trim()) {
       newErrors.correctAnswer = 'Укажите правильный ответ';
@@ -240,6 +240,12 @@ const QuizQuestionModal = ({
 
     if (formData.questionType === 'grammar_selection') {
       payload.questionText = 'Выберите правильный грамматический вариант';
+      const correctAnswer = formData.answers.find(a => a.isCorrect);
+      payload.correctAnswer = correctAnswer ? correctAnswer.answerText : '';
+    }
+
+    if (formData.questionType === 'pronunciation') {
+      payload.questionText = 'Выберите правильный вариант произношения';
       const correctAnswer = formData.answers.find(a => a.isCorrect);
       payload.correctAnswer = correctAnswer ? correctAnswer.answerText : '';
     }
@@ -278,9 +284,8 @@ const QuizQuestionModal = ({
     const newValue = field === 'isCorrect' ? (typeof value === 'string' ? value === 'true' : value) : value;
     
     if (field === 'isCorrect' && newValue) {
-      if (formData.questionType === 'grammar_selection') {
+      if (formData.questionType === 'grammar_selection' || formData.questionType === 'pronunciation') {
         newAnswers.forEach(a => a.isCorrect = false);
-      } else {
       }
     }
     

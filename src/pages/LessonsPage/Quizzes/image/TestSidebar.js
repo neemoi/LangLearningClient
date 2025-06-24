@@ -1,93 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API_CONFIG from '../../../../components/src/config';
 import './css/TestSidebar.css';
 
-const TestSidebar = ({ 
-  testType, 
-  testStarted, 
-  showResults, 
-  wordStats, 
-  quizData, 
-  testQuestions, 
-  lessonId, 
-  testResults = [] 
+const TEST_TYPES = {
+  IMAGE: 'image',
+  AUDIO: 'audio',
+  AUDIO_IMAGE: 'audio-image',
+  SPELLING: 'spelling',
+  GRAMMAR: 'grammar',
+  PRONUNCIATION: 'pronunciation',
+  ADVANCED: 'advanced-test'
+};
+
+const getTestPath = (quizId) => {
+  const pathMap = {
+    [TEST_TYPES.IMAGE]: 'image-test',
+    [TEST_TYPES.AUDIO]: 'audio-test',
+    [TEST_TYPES.AUDIO_IMAGE]: 'audio-image-test',
+    [TEST_TYPES.SPELLING]: 'spelling-test',
+    [TEST_TYPES.GRAMMAR]: 'grammar-test',
+    [TEST_TYPES.PRONUNCIATION]: 'pronunciation-test',
+    [TEST_TYPES.ADVANCED]: 'advanced-test'
+  };
+  return pathMap[quizId] || quizId;
+};
+
+const TestSidebar = ({
+  testType,
+  testStarted,
+  showResults,
+  wordStats,
+  quizData,
+  testQuestions = {},
+  lessonId,
+  testResults = [],
+  navigate
 }) => {
-  const [hoveredCard, setHoveredCard] = useState(null);
-  const [detailedResults, setDetailedResults] = useState(null);
-  const navigate = useNavigate();
+  const routerNavigate = useNavigate();
 
-  useEffect(() => {
-    const fetchDetailedResults = async () => {
-      try {
-        const token = localStorage.getItem('userToken');
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        if (!user?.id) return;
-
-        const response = await fetch(
-          `${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`,
-          { headers: { 'Authorization': `Bearer ${token}` } }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setDetailedResults(data);
-        }
-      } catch (error) {
-        console.error('Error fetching detailed results:', error);
-      }
-    };
-
-    if (lessonId) {
-      fetchDetailedResults();
-    }
-  }, [lessonId, showResults]);
-
-  const getTestPath = (quizId) => {
-    const pathMap = {
-      'image': 'image-test',
-      'audio': 'audio-test',
-      'audio-image': 'audio-image-test',
-      'spelling': 'spelling-test',
-      'grammar': 'grammar-test'
-    };
-    return pathMap[quizId] || `${quizId}-test`;
-  };
-
-  const handleTestNavigation = (quizId) => {
-    if (!lessonId) return;
-    if (testQuestions?.[quizId]?.length === 0) return;
-    const testPath = getTestPath(quizId);
-    navigate(`/lessonsVirtual/${lessonId}/${testPath}`);
-  };
+  const handleTestNavigation = useCallback((quizId) => {
+    if (!lessonId || (testStarted && !showResults)) return;
+    const path = getTestPath(quizId);
+    const navFunction = navigate || routerNavigate;
+    navFunction(`/lessonsVirtual/${lessonId}/${path}`);
+  }, [lessonId, navigate, routerNavigate, testStarted, showResults]);
 
   const getTestScore = (quizId) => {
-    const localResult = testResults.find(result => result.testType === quizId);
-    if (localResult) return localResult.score;
-
-    if (detailedResults?.testResults) {
-      const apiResult = detailedResults.testResults.find(result => result.testType === quizId);
-      return apiResult?.score || 0;
-    }
-    return 0;
+    const result = testResults.find(r => r.testType === quizId);
+    if (!result) return 0;
+    
+    const score = result.score;
+    return Math.round(score > 1 ? score : score * 100);
   };
 
-  if (!lessonId) {
-    return (
-      <div className="progress-sidebar error">
-        <div className="error-message">
-          Ошибка: не удалось загрузить информацию об уроке
-        </div>
-      </div>
-    );
-  }
-
-const allTests = [
-  ...(quizData?.nouns || []),
-  ...(quizData?.grammar || []),
-  ...(quizData?.tests || []),
-  ...(quizData?.all || [])
-];
+  const progressStats = {
+    lesson: Math.round(((wordStats?.learnedWordsInLesson || 0) / (wordStats?.totalWordsInLesson || 1)) * 100),
+    course: Math.round(((wordStats?.learnedWordsOverall || 0) / (wordStats?.totalWordsOverall || 1)) * 100)
+  };
 
   return (
     <div className="progress-sidebar">
@@ -103,13 +72,12 @@ const allTests = [
             </div>
             <div className="progress-bar">
               <div 
-                className="progress-fill lesson-fill" 
-                style={{ 
-                  width: `${Math.round(((wordStats?.learnedWordsInLesson || 0) / (wordStats?.totalWordsInLesson || 1)) * 100)}%` 
-                }}
-              ></div>
+                className="progress-fill lesson-fill"
+                style={{ width: `${progressStats.lesson}%` }}
+              />
             </div>
           </div>
+
           <div className="progress-card">
             <div className="progress-info">
               <span className="progress-label">Курс</span>
@@ -119,30 +87,29 @@ const allTests = [
             </div>
             <div className="progress-bar">
               <div 
-                className="progress-fill course-fill" 
-                style={{ 
-                  width: `${Math.round(((wordStats?.learnedWordsOverall || 0) / (wordStats?.totalWordsOverall || 1)) * 100)}%` 
-                }}
-              ></div>
+                className="progress-fill course-fill"
+                style={{ width: `${progressStats.course}%` }}
+              />
             </div>
           </div>
         </div>
       </div>
 
       <div className="tests-section">
-        <h3 className="tests-header">Тесты</h3>
+        <h3 className="tests-header">Доступные тесты</h3>
         <div className="test-cards">
-          {allTests.map((quiz) => {
-            const questionsCount = testQuestions?.[quiz.id]?.length || 0;
-            const testScore = getTestScore(quiz.id);
-            
+          {quizData?.nouns?.map((quiz) => {
+            const questionsCount = testQuestions[quiz.id]?.length || 0;
+            const isActive = testType === quiz.id;
+            const isDisabled = questionsCount === 0 || (testStarted && !showResults);
+            const score = getTestScore(quiz.id);
+
             return (
-              <div 
+              <div
                 key={quiz.id}
-                className={`test-card ${testType === quiz.id ? 'active' : ''} ${questionsCount === 0 ? 'disabled' : ''}`}
-                onClick={() => handleTestNavigation(quiz.id)}
-                onMouseEnter={() => setHoveredCard(quiz.id)}
-                onMouseLeave={() => setHoveredCard(null)}
+                className={`test-card ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
+                onClick={() => !isDisabled && handleTestNavigation(quiz.id)}
+                title={isDisabled ? 'Тест недоступен' : quiz.tooltip}
               >
                 <div className="test-icon">
                   <img src={quiz.icon} alt={quiz.tooltip} />
@@ -156,10 +123,10 @@ const allTests = [
                     <div className="test-progress-bar">
                       <div 
                         className="test-progress-fill" 
-                        style={{ width: `${testScore}%` }}
-                      ></div>
+                        style={{ width: `${score}%` }}
+                      />
                     </div>
-                    <span className="test-progress-value">{testScore}%</span>
+                    <span className="test-progress-value">{score}%</span>
                   </div>
                 </div>
               </div>

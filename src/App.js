@@ -26,7 +26,8 @@ import AudioTestPage from './pages/LessonsPage/Quizzes/audio/AudioTestPage';
 import AudioImageTestPage from './pages/LessonsPage/Quizzes/audioImage/AudioImageTestPage';
 import SpellingTestPage from './pages/LessonsPage/Quizzes/spelling/SpellingTestPage';
 import GrammarTestPage from './pages/LessonsPage/Quizzes/grammar/GrammarTestPage';
-
+import PronunciationTestPage from './pages/LessonsPage/Quizzes/pronunciation/PronunciationTestPage';
+import AdvancedTestPage from './pages/LessonsPage/Quizzes/advanced/AdvancedTestPage';
 
 function App() {
   return (
@@ -50,6 +51,8 @@ function App() {
         <Route path="/lessonsVirtual/:lessonId/audio-image-test" element={<AudioImageTestPage />} />
         <Route path="/lessonsVirtual/:lessonId/spelling-test" element={<SpellingTestPage />} />
         <Route path="/lessonsVirtual/:lessonId/grammar-test" element={<GrammarTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/pronunciation-test" element={<PronunciationTestPage />} />
+        <Route path="/lessonsVirtual/:lessonId/advanced-test" element={<AdvancedTestPage />} />
         <Route path="/admin" element={<AdminPage />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UsersManagement />} />

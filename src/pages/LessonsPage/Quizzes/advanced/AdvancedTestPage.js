@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
 import TestSidebar from './../image/TestSidebar';
 import StartScreen from './../image/StartScreen';
-import ResultsScreen from './ResultsGrammarScreen';
+import ResultsAdvancedTestScreen from './ResultsAdvancedTestScreen';
 import API_CONFIG from '../../../../components/src/config';
 import EmptyTestState from '../../Quizzes/audioImage/EmptyTestState';
-import GrammarTestScreen from '../../Quizzes/grammar/GrammarTestScreen';
+import AdvancedTestScreen from './AdvancedTestScreen';
 
 const TEST_TYPES = {
   IMAGE: 'image',
@@ -16,7 +16,7 @@ const TEST_TYPES = {
   SPELLING: 'spelling',
   GRAMMAR: 'grammar',
   PRONUNCIATION: 'pronunciation',
-  ADVANCED: 'advanced-test' 
+  ADVANCED: 'advanced-test'
 };
 
 const DEFAULT_QUIZ_DATA = {
@@ -66,7 +66,7 @@ const Loader = () => (
   </div>
 );
 
-const GrammarTestPage = () => {
+const AdvancedTestPage = () => {
   const { lessonId } = useParams();
   const navigate = useNavigate();
   
@@ -90,7 +90,7 @@ const GrammarTestPage = () => {
     [TEST_TYPES.SPELLING]: [],
     [TEST_TYPES.GRAMMAR]: [],
     [TEST_TYPES.PRONUNCIATION]: [],
-    [TEST_TYPES.ADVANCED]: [] // Изменено с VECTORING на ADVANCED
+    [TEST_TYPES.ADVANCED]: []
   });
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [wordStats, setWordStats] = useState({
@@ -101,24 +101,14 @@ const GrammarTestPage = () => {
   });
   const [testResults, setTestResults] = useState([]);
 
-  useEffect(() => {
-    let interval;
-    if (timerActive) {
-      interval = setInterval(() => setTime(prev => prev + 1), 1000);
+  const getAnswerClass = (answer) => {
+    if (selectedAnswerId === null || timeExpired) return '';
+    if (answer.id === selectedAnswerId) {
+      return answer.isCorrect ? 'correct' : 'incorrect';
     }
-    return () => clearInterval(interval);
-  }, [timerActive]);
-
-  useEffect(() => {
-    let questionInterval;
-    if (testStarted && !showResults && questionTimeLeft > 0) {
-      questionInterval = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
-    } else if (questionTimeLeft === 0 && !timeExpired) {
-      setTimeExpired(true);
-      handleTimeExpired();
-    }
-    return () => clearInterval(questionInterval);
-  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
+    if (answer.isCorrect) return 'correct';
+    return '';
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -135,6 +125,23 @@ const GrammarTestPage = () => {
     setIsAuthenticated(authStatus);
     if (authStatus) fetchData();
   }, [navigate, lessonId]);
+
+  useEffect(() => {
+    let interval;
+    if (timerActive) interval = setInterval(() => setTime(prev => prev + 1), 1000);
+    return () => clearInterval(interval);
+  }, [timerActive]);
+
+  useEffect(() => {
+    let questionTimer;
+    if (testStarted && !showResults && questionTimeLeft > 0) {
+      questionTimer = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
+    } else if (questionTimeLeft === 0 && !timeExpired) {
+      setTimeExpired(true);
+      handleTimeExpired();
+    }
+    return () => clearInterval(questionTimer);
+  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
 
   const fetchData = async () => {
     try {
@@ -157,12 +164,16 @@ const GrammarTestPage = () => {
       const [quizzesData, wordStatsData, progressData] = await Promise.all([
         quizzesRes.json(),
         wordStatsRes.json(),
-        progressRes.ok ? progressRes.json() : { testResults: [] }
+        progressRes.json()
       ]);
-      
+
       setTestQuestions(processQuestions(quizzesData));
       setWordStats(wordStatsData);
       setTestResults(progressData.testResults || []);
+      
+      if (quizzesData?.length) {
+        setShuffledQuestions([...processQuestions(quizzesData)[TEST_TYPES.ADVANCED]].sort(() => 0.5 - Math.random()));
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -181,31 +192,23 @@ const GrammarTestPage = () => {
       [TEST_TYPES.ADVANCED]: []
     };
 
-    if (!quizzesData || !Array.isArray(quizzesData)) return result;
-
     quizzesData.forEach(quiz => {
-      if (!quiz.questions || !Array.isArray(quiz.questions)) return;
-
-      quiz.questions.forEach(question => {
-        try {
-          const qType = question.questionType?.toLowerCase();
-          if (qType.includes('grammar')) {
-            result[TEST_TYPES.GRAMMAR].push(question);
-          } else if (qType.includes('audio') && qType.includes('image')) {
-            result[TEST_TYPES.AUDIO_IMAGE].push(question);
-          } else if (qType.includes('image')) {
-            result[TEST_TYPES.IMAGE].push(question);
-          } else if (qType.includes('audio')) {
-            result[TEST_TYPES.AUDIO].push(question);
-          } else if (qType.includes('spelling')) {
-            result[TEST_TYPES.SPELLING].push(question);
-          } else if (qType.includes('pronunciation')) {
-            result[TEST_TYPES.PRONUNCIATION].push(question);
-          } else if (qType.includes('advanced')) {
-            result[TEST_TYPES.ADVANCED].push(question);
-          }
-        } catch (error) {
-          console.error('Error processing question:', question, error);
+      quiz.questions?.forEach(question => {
+        const qType = question.questionType?.toLowerCase();
+        if (qType.includes('advanced')) {
+          result[TEST_TYPES.ADVANCED].push(question);
+        } else if (qType.includes('image') && qType.includes('audio')) {
+          result[TEST_TYPES.AUDIO_IMAGE].push(question);
+        } else if (qType.includes('image')) {
+          result[TEST_TYPES.IMAGE].push(question);
+        } else if (qType.includes('audio')) {
+          result[TEST_TYPES.AUDIO].push(question);
+        } else if (qType.includes('spelling')) {
+          result[TEST_TYPES.SPELLING].push(question);
+        } else if (qType.includes('grammar')) {
+          result[TEST_TYPES.GRAMMAR].push(question);
+        } else if (qType.includes('pronunciation')) {
+          result[TEST_TYPES.PRONUNCIATION].push(question);
         }
       });
     });
@@ -213,17 +216,9 @@ const GrammarTestPage = () => {
     return result;
   };
 
-  useEffect(() => {
-    if (testQuestions[TEST_TYPES.GRAMMAR]?.length) {
-      setShuffledQuestions([...testQuestions[TEST_TYPES.GRAMMAR]].sort(() => 0.5 - Math.random()));
-    }
-  }, [testQuestions]);
-
   const startTest = () => {
-    if (testQuestions[TEST_TYPES.GRAMMAR].length === 0) {
-      alert(`Нет вопросов для теста. Доступно:
-      Грамматика: ${testQuestions[TEST_TYPES.GRAMMAR].length}
-      Продвинутый тест: ${testQuestions[TEST_TYPES.ADVANCED].length}`);
+    if (testQuestions[TEST_TYPES.ADVANCED].length === 0) {
+      alert('Для этого урока нет вопросов продвинутого теста');
       return;
     }
     
@@ -237,12 +232,6 @@ const GrammarTestPage = () => {
     setSelectedAnswerId(null);
     setQuestionTimeLeft(30);
     setTimeExpired(false);
-  };
-
-  const handleUnauthorized = () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userToken');
-    navigate('/');
   };
 
   const handleTimeExpired = () => {
@@ -261,16 +250,6 @@ const GrammarTestPage = () => {
     setTimeout(goToNextQuestion, 2000);
   };
 
-  const getAnswerClass = (answer) => {
-    if (!selectedAnswerId && !timeExpired) return '';
-    const isSelected = answer.id === selectedAnswerId;
-    const isCorrect = answer.isCorrect;
-    if (timeExpired && isCorrect) return 'correct-highlight';
-    if (isCorrect && (selectedAnswerId || timeExpired)) return 'correct';
-    if (isSelected && !isCorrect) return 'incorrect';
-    return '';
-  };
-
   const goToNextQuestion = () => {
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -287,20 +266,12 @@ const GrammarTestPage = () => {
     setShowResults(true);
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
-  };
-
-  const navigateToTest = (testId) => {
-    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
-  };
-
   if (!isAuthenticated) return null;
 
   if (loading) {
     return (
       <div className="test-page-wrapper">
-        <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
+        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
         <div className="content-wrapper">
           <Sidebar isOpen={sidebarOpen} />
           <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
@@ -313,10 +284,10 @@ const GrammarTestPage = () => {
     );
   }
 
-  if (testQuestions[TEST_TYPES.GRAMMAR].length === 0 && !loading) {
+  if (testQuestions[TEST_TYPES.ADVANCED].length === 0 && !loading) {
     return (
       <div className="test-page-wrapper">
-        <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
+        <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
         <div className="content-wrapper">
           <Sidebar isOpen={sidebarOpen} />
           <div className={`main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
@@ -335,7 +306,7 @@ const GrammarTestPage = () => {
 
   return (
     <div className="test-page-wrapper">
-      <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
+      <Navigation onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isSidebarOpen={sidebarOpen} />
       
       <div className="content-wrapper">
         <Sidebar isOpen={sidebarOpen} />
@@ -345,13 +316,13 @@ const GrammarTestPage = () => {
             <div className="test-main-content">
               {!testStarted ? (
                 <StartScreen 
-                  testType={TEST_TYPES.GRAMMAR}
-                  totalQuestions={testQuestions[TEST_TYPES.GRAMMAR].length}
+                  testType={TEST_TYPES.ADVANCED}
+                  totalQuestions={testQuestions[TEST_TYPES.ADVANCED].length}
                   quizData={DEFAULT_QUIZ_DATA}
                   startTest={startTest}
                 />
               ) : showResults ? (
-                <ResultsScreen 
+                <ResultsAdvancedTestScreen 
                   score={score}
                   totalQuestions={shuffledQuestions.length}
                   errors={errors}
@@ -361,7 +332,7 @@ const GrammarTestPage = () => {
                   lessonId={lessonId}
                 />
               ) : (
-                <GrammarTestScreen
+                <AdvancedTestScreen
                   currentQuestion={shuffledQuestions[currentQuestionIndex]}
                   currentQuestionIndex={currentQuestionIndex}
                   totalQuestions={shuffledQuestions.length}
@@ -379,13 +350,13 @@ const GrammarTestPage = () => {
 
             {(!testStarted || showResults) && (
               <TestSidebar
-                testType={TEST_TYPES.GRAMMAR}
+                testType={TEST_TYPES.ADVANCED}
                 testStarted={testStarted}
                 showResults={showResults}
                 wordStats={wordStats}
                 quizData={DEFAULT_QUIZ_DATA}
                 testQuestions={testQuestions}
-                navigateToTest={navigateToTest}
+                navigate={navigate}
                 lessonId={lessonId}
                 testResults={testResults}
               />
@@ -397,4 +368,4 @@ const GrammarTestPage = () => {
   );
 };
 
-export default GrammarTestPage;
+export default AdvancedTestPage;

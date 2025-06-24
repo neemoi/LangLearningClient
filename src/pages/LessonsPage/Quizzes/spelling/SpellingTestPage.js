@@ -1,14 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
 import API_CONFIG from '../../../../components/src/config';
-import ResultsSpelling from './ResultsSpelling';
+import ResultsTestScreen from './ResultsSpelling';
 import StartScreen from './../image/StartScreen';
 import EmptyTestState from './../audioImage/EmptyTestState';
 import ActiveSpellingTestScreen from './ActiveSpellingTestScreen';
 import TestSidebar from './../image/TestSidebar';
 import './css/SpellingTestPage.css';
+
+const TEST_TYPES = {
+  IMAGE: 'image',
+  AUDIO: 'audio',
+  AUDIO_IMAGE: 'audio-image',
+  SPELLING: 'spelling',
+  GRAMMAR: 'grammar',
+  PRONUNCIATION: 'pronunciation',
+  ADVANCED: 'advanced-test'
+};
+
+const DEFAULT_QUIZ_DATA = {
+  nouns: [
+    {
+      id: TEST_TYPES.IMAGE,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but04.png',
+      tooltip: 'Изображение/Текст'
+    },
+    {
+      id: TEST_TYPES.AUDIO,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but05.png',
+      tooltip: 'Текст/Звукозапись'
+    },
+    {
+      id: TEST_TYPES.AUDIO_IMAGE,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but06.png',
+      tooltip: 'Изображение/Звукозапись'
+    },
+    {
+      id: TEST_TYPES.SPELLING,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but07.png',
+      tooltip: 'Правописание'
+    },
+    {
+      id: TEST_TYPES.GRAMMAR,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but08.png',
+      tooltip: 'Грамматика'
+    },
+    {
+      id: TEST_TYPES.PRONUNCIATION,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but09.png',
+      tooltip: 'Произношение'
+    },
+    {
+      id: TEST_TYPES.ADVANCED,
+      icon: 'https://winner.gfriend.com/Content/images/vc-but10.png',
+      tooltip: 'Продвинутый тест'
+    }
+  ]
+};
 
 const Loader = () => (
   <div className="loader-container">
@@ -17,21 +67,13 @@ const Loader = () => (
   </div>
 );
 
-const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-};
-
 const SpellingTestPage = () => {
-  const { lessonId, testType = 'spelling' } = useParams();
+  const { lessonId, testType = TEST_TYPES.SPELLING } = useParams();
   const navigate = useNavigate();
   
-  const [hoveredCard, setHoveredCard] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
   const [testStarted, setTestStarted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -42,43 +84,30 @@ const SpellingTestPage = () => {
   const [questionTimeLeft, setQuestionTimeLeft] = useState(30);
   const [timeExpired, setTimeExpired] = useState(false);
   const [userInput, setUserInput] = useState('');
-  
   const [testQuestions, setTestQuestions] = useState({
-    image: [], audio: [], 'audio-image': [], spelling: [], grammar: []
+    [TEST_TYPES.IMAGE]: [],
+    [TEST_TYPES.AUDIO]: [],
+    [TEST_TYPES.AUDIO_IMAGE]: [],
+    [TEST_TYPES.SPELLING]: [],
+    [TEST_TYPES.GRAMMAR]: [],
+    [TEST_TYPES.PRONUNCIATION]: [],
+    [TEST_TYPES.ADVANCED]: [] 
   });
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [allWords, setAllWords] = useState([]);
   const [lessonWords, setLessonWords] = useState([]);
-  const [bestResults, setBestResults] = useState({ score: 0, time: 0 });
-  const [detailedProgress, setDetailedProgress] = useState(null);
-  const [quizProgress, setQuizProgress] = useState({
-    image: 0, audio: 0, 'audio-image': 0, spelling: 0, grammar: 0
-  });
   const [wordStats, setWordStats] = useState({
     totalWordsInLesson: 0,
     learnedWordsInLesson: 0,
     totalWordsOverall: 0,
     learnedWordsOverall: 0
   });
-
-  const quizData = {
-    nouns: [
-      { id: 'image', icon: 'https://winner.gfriend.com/Content/images/vc-but04.png', tooltip: 'Изображение/Текст' },
-      { id: 'audio', icon: 'https://winner.gfriend.com/Content/images/vc-but05.png', tooltip: 'Текст/Звукозапись' },
-      { id: 'audio-image', icon: 'https://winner.gfriend.com/Content/images/vc-but06.png', tooltip: 'Изображение/Звукозапись' },
-      { id: 'spelling', icon: 'https://winner.gfriend.com/Content/images/vc-but07.png', tooltip: 'Правописание/Печать' }
-    ],
-    grammar: [
-      { id: 'grammar', icon: 'https://winner.gfriend.com/Content/images/vc-but08.png', tooltip: 'Грамматика' }
-    ]
-  };
+  const [detailedProgress, setDetailedProgress] = useState(null);
 
   useEffect(() => {
     let interval;
     if (timerActive) {
-      interval = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
+      interval = setInterval(() => setTime(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [timerActive]);
@@ -86,9 +115,7 @@ const SpellingTestPage = () => {
   useEffect(() => {
     let questionInterval;
     if (testStarted && !showResults && questionTimeLeft > 0) {
-      questionInterval = setInterval(() => {
-        setQuestionTimeLeft(prev => prev - 1);
-      }, 1000);
+      questionInterval = setInterval(() => setQuestionTimeLeft(prev => prev - 1), 1000);
     } else if (questionTimeLeft === 0 && !timeExpired) {
       setTimeExpired(true);
       handleTimeExpired();
@@ -96,19 +123,10 @@ const SpellingTestPage = () => {
     return () => clearInterval(questionInterval);
   }, [testStarted, showResults, questionTimeLeft, timeExpired]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const navigateToTest = (testId) => {
-    navigate(`/lessonsVirtual/${lessonId}/test/${testId}`);
-  };
-
   useEffect(() => {
     const checkAuth = () => {
       const currentUser = localStorage.getItem('currentUser');
       const userToken = localStorage.getItem('userToken');
-      
       if (!currentUser || !userToken) {
         navigate('/');
         return false;
@@ -118,10 +136,7 @@ const SpellingTestPage = () => {
 
     const authStatus = checkAuth();
     setIsAuthenticated(authStatus);
-    
-    if (authStatus) {
-      fetchData();
-    }
+    if (authStatus) fetchData();
   }, [navigate, lessonId]);
 
   const fetchData = async () => {
@@ -148,11 +163,6 @@ const SpellingTestPage = () => {
         })
       ]);
 
-      if ([allWordsRes, lessonWordsRes, quizzesRes, progressRes, wordStatsRes].some(res => res.status === 401)) {
-        handleUnauthorized();
-        return;
-      }
-
       const [allWordsData, lessonWordsData, quizzesData, progressData, wordStatsData] = await Promise.all([
         allWordsRes.json(),
         lessonWordsRes.json(),
@@ -163,7 +173,7 @@ const SpellingTestPage = () => {
       
       setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
       setLessonWords(Array.isArray(lessonWordsData) ? lessonWordsData : []);
-      setTestQuestions(processQuestions(quizzesData, allWordsData));
+      setTestQuestions(processQuestions(quizzesData, allWordsData, lessonWordsData));
       setDetailedProgress(progressData || null);
       setWordStats(wordStatsData || {
         totalWordsInLesson: 0,
@@ -171,77 +181,79 @@ const SpellingTestPage = () => {
         totalWordsOverall: 0,
         learnedWordsOverall: 0
       });
-      
-      const quizTypes = ['image', 'audio', 'audio-image', 'spelling', 'grammar'];
-      const progressMap = {};
-      quizTypes.forEach(type => {
-        const quizId = getQuestionType(type);
-        const quiz = progressData?.quizzes?.find(q => q.quizId === quizId) || {};
-        const progress = quiz ? Math.round((quiz.correctAnswers / (quiz.totalQuestions || 1)) * 100) : 0;
-        progressMap[type] = isNaN(progress) ? 0 : progress;
-      });
-      setQuizProgress(progressMap);
-      
     } catch (error) {
-      console.error('Ошибка при загрузке данных:', error);
-      setAllWords([]);
-      setLessonWords([]);
-      setTestQuestions({ image: [], audio: [], 'audio-image': [], spelling: [], grammar: [] });
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUnauthorized = () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userToken');
-    navigate('/');
-  };
+  const processQuestions = (quizzesData, wordsData, lessonWordsData) => {
+    const result = {
+      [TEST_TYPES.IMAGE]: [],
+      [TEST_TYPES.AUDIO]: [],
+      [TEST_TYPES.AUDIO_IMAGE]: [],
+      [TEST_TYPES.SPELLING]: [],
+      [TEST_TYPES.GRAMMAR]: [],
+      [TEST_TYPES.PRONUNCIATION]: [],
+      [TEST_TYPES.ADVANCED]: []
+    };
 
-  const processQuestions = (quizzesData, wordsData) => {
-    const result = { image: [], audio: [], 'audio-image': [], spelling: [], grammar: [] };
+    const wordsDict = wordsData.reduce((acc, word) => {
+      acc[word.id] = word;
+      acc[word.name.toLowerCase()] = word;
+      return acc;
+    }, {});
 
-    if (!Array.isArray(quizzesData)) {
-      console.error('quizzesData не является массивом:', quizzesData);
-      return result;
-    }
+    const lessonWordsDict = lessonWordsData?.reduce((acc, lw) => {
+      acc[lw.wordId] = lw;
+      return acc;
+    }, {}) || {};
 
     quizzesData.forEach(quiz => {
-      if (quiz.questions && Array.isArray(quiz.questions)) {
-        quiz.questions.forEach(question => {
-          const processedQuestion = {
-            ...question,
-            options: generateOptions(question.correctAnswer, wordsData, 4)
-          };
+      quiz.questions?.forEach(question => {
+        const normalizedAnswer = question.correctAnswer?.toLowerCase().trim();
+        const word = wordsDict[normalizedAnswer] || 
+                    Object.values(wordsDict).find(w => 
+                      w.name.toLowerCase() === normalizedAnswer);
+        
+        const lessonWord = word?.id ? lessonWordsDict[word.id] : null;
 
-          const qType = (question.questionType || '').toLowerCase();
-          if (qType.includes('image') && !qType.includes('audio')) {
-            result.image.push(processedQuestion);
-          } else if (qType.includes('audio') && !qType.includes('image')) {
-            result.audio.push(processedQuestion);
-          } else if (qType.includes('audio') && qType.includes('image')) {
-            result['audio-image'].push(processedQuestion);
-          } else if (qType.includes('spelling')) {
-            result.spelling.push(processedQuestion);
-          } else if (qType.includes('grammar')) {
-            result.grammar.push(processedQuestion);
-          }
-        });
-      }
+        const processedQuestion = {
+          ...question,
+          wordId: word?.id,
+          lessonWordId: lessonWord?.id,
+          options: generateOptions(question.correctAnswer, wordsData, 4)
+        };
+
+        const qType = question.questionType?.toLowerCase();
+        if (qType.includes('image') && !qType.includes('audio')) {
+          result[TEST_TYPES.IMAGE].push(processedQuestion);
+        } else if (qType.includes('audio') && !qType.includes('image')) {
+          result[TEST_TYPES.AUDIO].push(processedQuestion);
+        } else if (qType.includes('audio') && qType.includes('image')) {
+          result[TEST_TYPES.AUDIO_IMAGE].push(processedQuestion);
+        } else if (qType.includes('spelling')) {
+          result[TEST_TYPES.SPELLING].push(processedQuestion);
+        } else if (qType.includes('grammar')) {
+          result[TEST_TYPES.GRAMMAR].push(processedQuestion);
+        } else if (qType.includes('pronunciation')) {
+          result[TEST_TYPES.PRONUNCIATION].push(processedQuestion);
+        } else if (qType.includes('advanced')) {
+          result[TEST_TYPES.ADVANCED].push(processedQuestion);
+        }
+      });
     });
 
     return result;
   };
 
   const generateOptions = (correctAnswer, wordsData, count = 4) => {
-    if (!Array.isArray(wordsData) || wordsData.length === 0 || !correctAnswer) {
-      return [correctAnswer].filter(Boolean);
-    }
+    if (!wordsData?.length) return [correctAnswer];
     
     const otherWords = wordsData
-      .filter(word => word?.name?.toLowerCase() !== correctAnswer?.toLowerCase())
-      .map(word => word.name)
-      .filter(Boolean);
+      .filter(word => word.name.toLowerCase() !== correctAnswer?.toLowerCase())
+      .map(word => word.name);
     
     const randomWords = [...otherWords]
       .sort(() => 0.5 - Math.random())
@@ -250,13 +262,49 @@ const SpellingTestPage = () => {
     return [...randomWords, correctAnswer].sort(() => 0.5 - Math.random());
   };
 
-  const getQuestionType = (type) => {
+  useEffect(() => {
+    if (testQuestions[testType]?.length) {
+      setShuffledQuestions([...testQuestions[testType]].sort(() => 0.5 - Math.random()));
+    }
+  }, [testQuestions, testType]);
+
+  const sendProgress = async (isCorrect) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+      const payload = {
+        userId: user.id,
+        lessonId: parseInt(lessonId),
+        wordId: currentQuestion.wordId,
+        questionType: getQuestionTypeId(testType),
+        isCorrect,
+        lessonWordId: currentQuestion.lessonWordId || 0
+      };
+
+      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      console.error('Error sending progress:', error);
+    }
+  };
+
+  const getQuestionTypeId = (type) => {
     switch(type) {
-      case 'image': return 1;
-      case 'audio': return 2;
-      case 'audio-image': return 3;
-      case 'spelling': return 4;
-      case 'grammar': return 5;
+      case TEST_TYPES.IMAGE: return 1;
+      case TEST_TYPES.AUDIO: return 2;
+      case TEST_TYPES.AUDIO_IMAGE: return 3;
+      case TEST_TYPES.SPELLING: return 4;
+      case TEST_TYPES.GRAMMAR: return 5;
+      case TEST_TYPES.PRONUNCIATION: return 6;
+      case TEST_TYPES.ADVANCED: return 7;
       default: return 0;
     }
   };
@@ -264,11 +312,8 @@ const SpellingTestPage = () => {
   const startTest = () => {
     if (testQuestions[testType].length === 0) {
       alert(`Нет вопросов для теста. Доступно:
-      Изображения: ${testQuestions.image.length}
-      Аудио: ${testQuestions.audio.length}
-      Аудио+Изображение: ${testQuestions['audio-image'].length}
-      Правописание: ${testQuestions.spelling.length}
-      Грамматика: ${testQuestions.grammar.length}`);
+      Правописание: ${testQuestions[TEST_TYPES.SPELLING].length}
+      Продвинутый тест: ${testQuestions[TEST_TYPES.ADVANCED].length}`);
       return;
     }
     
@@ -286,8 +331,7 @@ const SpellingTestPage = () => {
   };
 
   const handleTimeExpired = async () => {
-    const newErrors = errors + 1;
-    setErrors(newErrors);
+    setErrors(prev => prev + 1);
     await sendProgress(false);
     setTimeout(goToNextQuestion, 2000);
   };
@@ -296,12 +340,15 @@ const SpellingTestPage = () => {
     e.preventDefault();
     if (timeExpired) return;
     
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion) return;
+    
     const isCorrect = userInput.trim().toLowerCase() === currentQuestion.correctAnswer.toLowerCase();
     
     if (isCorrect) {
-      setScore(prevScore => prevScore + 1);
+      setScore(prev => prev + 1);
     } else {
-      setErrors(prevErrors => prevErrors + 1);
+      setErrors(prev => prev + 1);
     }
     
     await sendProgress(isCorrect);
@@ -310,7 +357,7 @@ const SpellingTestPage = () => {
 
   const goToNextQuestion = () => {
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      setCurrentQuestionIndex(prev => prev + 1);
       setUserInput('');
       setQuestionTimeLeft(30);
       setTimeExpired(false);
@@ -321,74 +368,21 @@ const SpellingTestPage = () => {
 
   const finishTest = () => {
     setTimerActive(false);
-    
-    const currentScore = Math.round((score / shuffledQuestions.length) * 100);
-    const isNewRecord = currentScore > bestResults.score || 
-                      (currentScore === bestResults.score && time < bestResults.time);
-    
-    if (isNewRecord) {
-      setBestResults({ score: currentScore, time });
-    }
-
     setShowResults(true);
   };
 
-  const sendProgress = async (isCorrect) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      if (!user?.id) {
-        handleUnauthorized();
-        return;
-      }
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
 
-      const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      const word = allWords.find(w => 
-        w.name?.toLowerCase() === currentQuestion?.correctAnswer?.toLowerCase()
-      );
-      
-      const lessonWord = lessonWords.find(lw => lw.wordId === word?.id);
-      
-      const payload = {
-        userId: user.id,
-        lessonId: parseInt(lessonId),
-        wordId: word?.id || 0,
-        questionType: getQuestionType(testType),
-        isCorrect,
-        lessonWordId: lessonWord?.id || 0
-      };
-
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.status === 401) {
-        handleUnauthorized();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Ошибка HTTP! статус: ${response.status}`);
-      }
-
-      return await response.json();
-      
-    } catch (error) {
-      console.error('Ошибка при отправке прогресса:', error);
-    }
+  const navigateToTest = (testId) => {
+    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
   };
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex] || {};
   const totalQuestions = shuffledQuestions.length;
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   if (loading) {
     return (
@@ -440,11 +434,11 @@ const SpellingTestPage = () => {
                 <StartScreen 
                   testType={testType}
                   totalQuestions={testQuestions[testType].length}
-                  quizData={quizData}
+                  quizData={DEFAULT_QUIZ_DATA}
                   startTest={startTest}
                 />
               ) : showResults ? (
-                <ResultsSpelling
+                <ResultsTestScreen
                   score={score}
                   totalQuestions={shuffledQuestions.length}
                   errors={errors}
@@ -452,7 +446,7 @@ const SpellingTestPage = () => {
                   wordStats={wordStats}
                   startTest={startTest}
                   lessonId={lessonId}
-                  testType="spelling"
+                  testType={testType}
                 />
               ) : (
                 <ActiveSpellingTestScreen
@@ -466,8 +460,6 @@ const SpellingTestPage = () => {
                   handleSubmit={handleSubmit}
                   userInput={userInput}
                   setUserInput={setUserInput}
-                  lessonId={lessonId}
-                  lessonTitle="Текущий урок"
                 />
               )}
             </div>
@@ -479,12 +471,10 @@ const SpellingTestPage = () => {
                 showResults={showResults}
                 wordStats={wordStats}
                 testResults={detailedProgress?.testResults || []}
-                quizData={quizData}
+                quizData={DEFAULT_QUIZ_DATA}
                 testQuestions={testQuestions}
-                hoveredCard={hoveredCard}
-                setHoveredCard={setHoveredCard}
                 navigateToTest={navigateToTest}
-                lessonId={lessonId} 
+                lessonId={lessonId}
               />
             )}
           </div>
