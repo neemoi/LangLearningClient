@@ -28,6 +28,18 @@ import SpellingTestPage from './pages/LessonsPage/Quizzes/spelling/SpellingTestP
 import GrammarTestPage from './pages/LessonsPage/Quizzes/grammar/GrammarTestPage';
 import PronunciationTestPage from './pages/LessonsPage/Quizzes/pronunciation/PronunciationTestPage';
 import AdvancedTestPage from './pages/LessonsPage/Quizzes/advanced/AdvancedTestPage';
+import NounsPage from './pages/NounsPage/NounsPage';
+import WordsByLetterPage from './pages/NounsPage/WordsByLetter/WordsByLetterPage';
+import PartsOfSpeechPage from './pages/PartsOfSpeech/PartsOfSpeechPage';
+import WordsByPartOfSpeechPage from './pages/PartsOfSpeech/WordsByPartOfSpeech/WordsByPartOfSpeechPage';
+import AlphabetPage from './pages/MiniLessonsPage/AlphabetPage/AlphabetPage';
+import NumbersPage from './pages/MiniLessonsPage/NumbersPage/NumbersPage';
+import NumbersMathPage from './pages/MiniLessonsPage/NumbersMathPage/NumbersMathPage';
+import AccountingPage from './pages/MiniLessonsPage/AccountingPage/AccountingPage';
+import OrdinalNumbersPage from './pages/MiniLessonsPage/OrdinalNumbersPage/OrdinalNumbersPage';
+import MoneyPage from './pages/MiniLessonsPage/MoneyPage/MoneyPage';
+import TimePage from './pages/MiniLessonsPage/TimePage/TimePage';
+import DatesPage from './pages/MiniLessonsPage/DatesPage/DatesPage';
 
 function App() {
   return (
@@ -37,6 +49,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<PasswordResetPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        
+        <Route path="/mini-lessons/alphabet" element={<AlphabetPage />} />
+        
         <Route 
           path="/lessonsVirtual" 
           element={<Navigate to="/lessonsVirtual/1" replace />} 
@@ -53,6 +68,18 @@ function App() {
         <Route path="/lessonsVirtual/:lessonId/grammar-test" element={<GrammarTestPage />} />
         <Route path="/lessonsVirtual/:lessonId/pronunciation-test" element={<PronunciationTestPage />} />
         <Route path="/lessonsVirtual/:lessonId/advanced-test" element={<AdvancedTestPage />} />
+        <Route path="/mini-lessons/numbers" element={<NumbersPage />} />
+        <Route path="/numbers/math" element={<NumbersMathPage />} />
+        <Route path="/numbers/accounting" element={<AccountingPage />} />
+        <Route path="/numbers/ordinal" element={<OrdinalNumbersPage />} />
+        <Route path="/numbers/money" element={<MoneyPage />} />
+        <Route path="/numbers/time" element={<TimePage />} />
+        <Route path="/numbers/dates" element={<TimePage />} />
+        <Route path="/nouns" element={<NounsPage />} />
+        <Route path="/alphabet/:letter" element={<WordsByLetterPage />} />
+        <Route path="/functions" element={<PartsOfSpeechPage />} />
+        <Route path="/functions/:id" element={<WordsByPartOfSpeechPage />} />
+        
         <Route path="/admin" element={<AdminPage />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UsersManagement />} />

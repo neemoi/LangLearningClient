@@ -77,7 +77,7 @@ const LessonHeader = ({ currentLesson, navigate }) => {
   };
 
   return (
-    <div className="lesson-header-container">
+   <div className="lesson-header-container" style={{ marginTop: '10px', marginBottom: '-20px'}}>
       <div className="header-top-row">
         <div className="words-counter">
           <span className="learned-count">{stats.learned}</span>

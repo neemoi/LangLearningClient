@@ -1,59 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import './css/LessonQuizzes.css';
+import API_CONFIG from '../../components/src/config';
 
 const LessonQuizzes = ({ startQuiz, lessonId }) => {
   const [hoveredQuiz, setHoveredQuiz] = useState(null);
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const fetchProgressData = async () => {
+    try {
+      setLoading(true);
+      setProgressData(null); 
+      
+      const currentUser = localStorage.getItem('currentUser');
+      const userToken = localStorage.getItem('userToken');
+
+      if (!currentUser || !userToken || !lessonId) {
+        setLoading(false);
+        return;
+      }
+
+      const user = JSON.parse(currentUser);
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      setProgressData(data);
+    } catch (err) {
+      console.error('Error fetching progress data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!lessonId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProgressData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const currentUser = localStorage.getItem('currentUser');
-        const userToken = localStorage.getItem('userToken');
-
-        if (!currentUser || !userToken) {
-          throw new Error('Пользователь не авторизован');
-        }
-
-        const user = JSON.parse(currentUser);
-        if (!user?.id) {
-          throw new Error('Неверный формат данных пользователя');
-        }
-
-        const response = await fetch(
-          `https://localhost:7119/api/UserProgress/detailed/${user.id}/${lessonId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${userToken}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Ошибка сервера: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setProgressData(data);
-      } catch (err) {
-        console.error('Error fetching progress data:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProgressData();
   }, [lessonId]);
 
@@ -97,20 +94,6 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
       <div className="quiz-loading">
         <div className="quiz-loading-spinner"></div>
         <p>Загрузка данных прогресса...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="quiz-error">
-        <p>Ошибка: {error}</p>
-        <button 
-          className="quiz-retry-btn"
-          onClick={() => window.location.reload()}
-        >
-          Попробовать снова
-        </button>
       </div>
     );
   }

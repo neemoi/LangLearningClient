@@ -1,0 +1,298 @@
+:root {
+  --wb-sidebar-width: 280px;
+  --wb-main-color: #7bb569;
+  --wb-main-color-light: #000000;
+  --wb-accent-color: #000000;
+  --wb-accent-color-light: #FF9E8A;
+  --wb-light-bg: #F8F8F8;
+  --wb-card-bg: #FFFFFF;
+  --wb-text-color: #333333;
+  --wb-text-light: #777777;
+  --wb-border-radius: 16px;
+  --wb-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --wb-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --wb-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes underlinePulse {
+  0%, 100% { width: 60px; }
+  50% { width: 80px; }
+}
+
+.parts-of-speech-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--wb-light-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.parts-of-speech-content {
+  flex-grow: 1;
+  padding: 90px 40px 40px;
+  transition: margin-left 0.3s ease;
+}
+
+.parts-of-speech-content.with-sidebar {
+  margin-left: var(--wb-sidebar-width);
+}
+
+.parts-of-speech-content.no-sidebar {
+  margin-left: 0;
+}
+
+.parts-of-speech-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.page-header.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(93, 141, 127, 0.1);
+  border: none;
+  color: var(--wb-main-color);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--wb-border-radius);
+  transition: var(--wb-transition);
+}
+
+.back-button:hover {
+  background: rgba(0, 0, 0, 0.2);
+  transform: translateX(-3px);
+}
+
+.header-spacer {
+  width: 120px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--wb-main-color);
+  margin: 0;
+  position: relative;
+}
+
+.page-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background-color: var(--wb-accent-color);
+  border-radius: 2px;
+  animation: underlinePulse 2s infinite ease-in-out;
+}
+
+.parts-of-speech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.part-of-speech-wrapper {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.part-of-speech-wrapper.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.part-of-speech-card {
+  background: var(--wb-card-bg);
+  border-radius: var(--wb-border-radius);
+  box-shadow: var(--wb-shadow);
+  padding: 2rem;
+  transition: var(--wb-transition);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.part-of-speech-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--wb-shadow-hover);
+}
+
+.card-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(93, 141, 127, 0.1);
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.part-of-speech-card:hover .card-icon {
+  transform: rotate(15deg) scale(1.1);
+}
+
+.part-of-speech-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--wb-main-color);
+  margin-bottom: 1rem;
+}
+
+.view-words-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wb-accent-color);
+  font-weight: 500;
+  margin-top: 1rem;
+  transition: var(--wb-transition);
+}
+
+.part-of-speech-card:hover .view-words-link {
+  transform: translateX(5px);
+}
+
+.parts-of-speech-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: var(--wb-main-color);
+  animation: fadeIn 0.5s ease;
+}
+
+.parts-of-speech-loading .spinner {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1.5rem;
+  border: 4px solid rgba(93, 141, 127, 0.2);
+  border-top-color: var(--wb-main-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .parts-of-speech-content {
+    padding: 80px 30px 30px;
+  }
+}
+
+@media (max-width: 992px) {
+  .parts-of-speech-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .page-title {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .parts-of-speech-content {
+    padding: 80px 25px 25px;
+  }
+  
+  .parts-of-speech-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  
+  .part-of-speech-card {
+    padding: 1.75rem;
+  }
+  
+  .page-header {
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .parts-of-speech-content {
+    padding: 70px 20px 20px;
+  }
+  
+  .parts-of-speech-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .back-button {
+    padding: 0.5rem 1rem;
+  }
+  
+  .header-spacer {
+    display: none;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    align-self: center;
+  }
+  
+  .page-title::after {
+    bottom: -8px;
+  }
+  
+  .card-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 1.25rem;
+  }
+  
+  .part-of-speech-name {
+    font-size: 1.3rem;
+  }
+}
