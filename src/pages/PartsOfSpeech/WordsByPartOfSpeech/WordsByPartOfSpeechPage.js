@@ -19,6 +19,7 @@ const WordsByPartOfSpeechPage = () => {
   const [voices, setVoices] = useState([]);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [animate, setAnimate] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
   const utteranceRef = useRef(null);
   const cancelAllRef = useRef(false);
   const playerRef = useRef(null);
@@ -59,7 +60,12 @@ const WordsByPartOfSpeechPage = () => {
         ]);
 
         setPartOfSpeech(partData);
-        setWords(wordsData || []);
+        
+        if (wordsData && wordsData.length > 0) {
+          setWords(wordsData);
+        } else {
+          setIsEmpty(true);
+        }
         
         setTimeout(() => {
           setAnimate(true);
@@ -73,6 +79,7 @@ const WordsByPartOfSpeechPage = () => {
         
       } catch (error) {
         console.error('Error:', error);
+        setIsEmpty(true);
       } finally {
         setLoading(false);
       }
@@ -185,56 +192,76 @@ const WordsByPartOfSpeechPage = () => {
   }
 
   return (
-    <div className="words-by-pos-page">
+    <div className="functions-page">
       <Navigation 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
         isSidebarOpen={sidebarOpen} 
       />
       
-      <div className="words-by-pos-content-wrapper">
+      <div className="functions-content-wrapper">
         <Sidebar isOpen={sidebarOpen} />
         
-        <Container fluid className={`words-by-pos-main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
-          <div className={`words-by-pos-sticky-navigation ${animate ? 'animate' : ''}`}>
-            <button 
-              onClick={() => navigate('/functions')} 
-              className="words-by-pos-back-button"
-            >
-              ← Все части речи
-            </button>
-            {partOfSpeech && (
-              <div className="words-by-pos-title">
-                {partOfSpeech.name}
-              </div>
-            )}
-          </div>
-
+        <Container fluid className={`functions-main-content ${sidebarOpen ? '' : 'sidebar-closed'}`}>
           {loading ? (
-            <div className="words-by-pos-loading-message">
-              <div className="words-by-pos-spinner"></div>
+            <div className="functions-loading-message">
+              <div className="functions-spinner"></div>
               <p>Загрузка слов...</p>
             </div>
-          ) : words.length > 0 ? (
+          ) : isEmpty ? (
+            <div className="functions-empty-state">
+              <div className="empty-state-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h3 className="empty-state-title">Для этой части речи пока нет слов</h3>
+              <p className="empty-state-message">Мы активно работаем над добавлением новых материалов. Скоро здесь появятся интересные слова!</p>
+              <button 
+                onClick={() => navigate('/functions')} 
+                className="empty-state-button"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Вернуться к частям речи
+              </button>
+            </div>
+          ) : (
             <>
+              <div className={`functions-sticky-navigation ${animate ? 'animate' : ''}`}>
+                <button 
+                  onClick={() => navigate('/functions')} 
+                  className="functions-back-button"
+                >
+                  ← Все части речи
+                </button>
+                {partOfSpeech && (
+                  <div className="functions-title">
+                    {partOfSpeech.name}
+                  </div>
+                )}
+              </div>
+
               <div 
-                className={`words-by-pos-full-width-player ${animate ? 'animate' : ''}`} 
+                className={`functions-full-width-player ${animate ? 'animate' : ''}`} 
                 ref={playerRef}
               >
-                <div className="words-by-pos-player-container">
-                  <div className="words-by-pos-player-image">
-                    <div className="words-by-pos-letter-placeholder">
+                <div className="functions-player-container">
+                  <div className="functions-player-image">
+                    <div className="functions-letter-placeholder">
                       {words[currentWordIndex]?.name.charAt(0).toUpperCase()}
                     </div>
                   </div>
-                  <div className="words-by-pos-player-content">
-                    <div className="words-by-pos-current-word-display">
+                  <div className="functions-player-content">
+                    <div className="functions-current-word-display">
                       <h3>{words[currentWordIndex]?.name || 'Нет слова'}</h3>
                       <p>{words[currentWordIndex]?.translation || 'Нет перевода'}</p>
                     </div>
-                    <div className="words-by-pos-player-controls">
+                    <div className="functions-player-controls">
                       <button 
                         onClick={handlePrev} 
-                        className="words-by-pos-control-button" 
+                        className="functions-control-button" 
                         disabled={words.length <= 1}
                         aria-label="Предыдущее слово"
                       >
@@ -242,7 +269,7 @@ const WordsByPartOfSpeechPage = () => {
                       </button>
                       <button 
                         onClick={handlePlaySingle} 
-                        className="words-by-pos-control-button words-by-pos-play-button"
+                        className="functions-control-button functions-play-button"
                         disabled={!words[currentWordIndex]}
                         aria-label="Произнести слово"
                       >
@@ -250,7 +277,7 @@ const WordsByPartOfSpeechPage = () => {
                       </button>
                       <button 
                         onClick={handleNext} 
-                        className="words-by-pos-control-button" 
+                        className="functions-control-button" 
                         disabled={words.length <= 1}
                         aria-label="Следующее слово"
                       >
@@ -262,22 +289,22 @@ const WordsByPartOfSpeechPage = () => {
               </div>
 
               <div 
-                className={`words-by-pos-grid ${animate ? 'animate' : ''}`}
+                className={`functions-grid ${animate ? 'animate' : ''}`}
                 ref={gridRef}
               >
                 <div 
-                  className={`words-by-pos-card words-by-pos-all-words-card ${isSpeakingAll ? 'active' : ''}`}
+                  className={`functions-card functions-all-words-card ${isSpeakingAll ? 'active' : ''}`}
                   onClick={handlePlayAll}
                   aria-label={isSpeakingAll ? 'Остановить воспроизведение' : 'Воспроизвести все слова'}
                 >
-                  <div className="words-by-pos-image-container words-by-pos-all-words-image">
-                    <div className="words-by-pos-all-words-icon">
+                  <div className="functions-image-container functions-all-words-image">
+                    <div className="functions-all-words-icon">
                       {isSpeakingAll ? '⏹' : '▶'}
                     </div>
                   </div>
-                  <div className="words-by-pos-info">
-                    <h4 className="words-by-pos-name">Все слова</h4>
-                    <p className="words-by-pos-translation">
+                  <div className="functions-info">
+                    <h4 className="functions-name">Все слова</h4>
+                    <p className="functions-translation">
                       {isSpeakingAll ? 'Остановить' : 'Воспроизвести все'}
                     </p>
                   </div>
@@ -286,25 +313,25 @@ const WordsByPartOfSpeechPage = () => {
                 {words.map((word, index) => (
                   <div 
                     key={word.id || index} 
-                    className={`words-by-pos-card ${index === currentWordIndex ? 'active' : ''}`}
+                    className={`functions-card ${index === currentWordIndex ? 'active' : ''}`}
                     onClick={() => handleSelectWord(index)}
                     aria-label={`Слово: ${word.name}`}
                     style={{ transitionDelay: `${index * 0.05}s` }}
                   >
-                    <div className="words-by-pos-image-container">
-                      <div className="words-by-pos-letter-placeholder small">
+                    <div className="functions-image-container">
+                      <div className="functions-letter-placeholder small">
                         {word.name.charAt(0).toUpperCase()}
                       </div>
                     </div>
-                    <div className="words-by-pos-info">
-                      <h4 className="words-by-pos-name">{word.name || 'Нет названия'}</h4>
-                      <p className="words-by-pos-translation">{word.translation || 'Нет перевода'}</p>
+                    <div className="functions-info">
+                      <h4 className="functions-name">{word.name || 'Нет названия'}</h4>
+                      <p className="functions-translation">{word.translation || 'Нет перевода'}</p>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           speak(word);
                         }}
-                        className="words-by-pos-speak-button"
+                        className="functions-speak-button"
                         aria-label="Произнести слово"
                       >
                       </button>
@@ -313,12 +340,6 @@ const WordsByPartOfSpeechPage = () => {
                 ))}
               </div>
             </>
-          ) : (
-            <div className={`words-by-pos-empty ${animate ? 'animate' : ''}`}>
-              <div className="words-by-pos-empty-icon">📖</div>
-              <h3>Слова не найдены</h3>
-              <p>Для этой части речи пока нет слов.</p>
-            </div>
           )}
         </Container>
       </div>

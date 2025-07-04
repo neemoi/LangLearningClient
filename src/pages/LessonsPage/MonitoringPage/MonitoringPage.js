@@ -161,7 +161,7 @@ const MonitoringPage = () => {
 
   if (data.loading) {
     return (
-      <div className="monitoring-layout">
+      <div className="monitoring-page">
         <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
         <LoadingScreen />
       </div>
@@ -170,7 +170,7 @@ const MonitoringPage = () => {
 
   if (data.error) {
     return (
-      <div className="monitoring-layout">
+      <div className="monitoring-page">
         <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
         <ErrorScreen message={data.error} />
       </div>
@@ -194,26 +194,26 @@ const MonitoringPage = () => {
   };
 
   return (
-    <div className="monitoring-layout">
+    <div className="monitoring-page">
       <Navigation onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
       
-      <div className="content-wrapper">
+      <div className="monitoring-content-wrapper">
         <Sidebar isOpen={sidebarOpen} />
         
-        <main className={`main-content ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
+        <main className={`monitoring-main-content ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
           <div className="monitoring-container">
             <BackButton 
               onClick={handleBackClick} 
               lessonTitle={progress.lessonTitle}
             />
             
-            <Header 
+            <MonitoringHeader 
               title={progress.lessonTitle} 
               score={progress.score}
               completedAt={progress.completedAt}
             />
             
-            <div className="progress-lines-row">
+            <div className="monitoring-progress-lines">
               <ProgressLine 
                 title="Банк слов"
                 description="Выученные слова"
@@ -255,17 +255,17 @@ const MonitoringPage = () => {
 };
 
 const BackButton = ({ onClick, lessonTitle }) => (
-  <button className="back-button" onClick={onClick}>
-    <span className="back-arrow">←</span> Назад к уроку "{lessonTitle}"
+  <button className="monitoring-back-button" onClick={onClick}>
+    <span className="monitoring-back-arrow">←</span> Назад к уроку "{lessonTitle}"
   </button>
 );
 
-const Header = ({ title, score, completedAt }) => (
+const MonitoringHeader = ({ title, score, completedAt }) => (
   <header className="monitoring-header">
-    <div className="header-content">
+    <div className="monitoring-header-content">
       <h1>{title}</h1>
-      <div className="header-meta">
-        <div className="completion-date">
+      <div className="monitoring-header-meta">
+        <div className="monitoring-completion-date">
           {new Date(completedAt).toLocaleDateString('ru-RU', { 
             day: 'numeric', 
             month: 'short',
@@ -281,27 +281,27 @@ const ProgressLine = ({ title, description, current, total, color, icon }) => {
   const percentage = Math.round((current / total) * 100);
   
   return (
-    <div className="progress-line-card">
-      <div className="progress-line-header">
-        <span className="progress-line-icon">{icon}</span>
-        <div className="progress-line-text">
+    <div className="monitoring-progress-card">
+      <div className="monitoring-progress-header">
+        <span className="monitoring-progress-icon">{icon}</span>
+        <div className="monitoring-progress-text">
           <h3>{title}</h3>
-          <p className="progress-line-description">{description}</p>
+          <p className="monitoring-progress-description">{description}</p>
         </div>
       </div>
       
-      <div className="progress-line-content">
-        <div className="progress-line-track">
+      <div className="monitoring-progress-content">
+        <div className="monitoring-progress-track">
           <div 
-            className="progress-line-fill" 
+            className="monitoring-progress-fill" 
             style={{ width: `${percentage}%`, backgroundColor: color }}
           ></div>
         </div>
         
-        <div className="progress-line-numbers">
-          <span className="current-value">{current}</span>
-          <span className="total-value">/{total}</span>
-          <span className="percentage">({percentage}%)</span>
+        <div className="monitoring-progress-numbers">
+          <span className="monitoring-current-value">{current}</span>
+          <span className="monitoring-total-value">/{total}</span>
+          <span className="monitoring-percentage">({percentage}%)</span>
         </div>
       </div>
     </div>
@@ -317,22 +317,22 @@ const WordProgressTable = ({ words, getTestCompletionStatus }) => {
   ];
 
   return (
-    <div className="progress-table-section">
-      <h2 className="section-title">Прогресс изучения</h2>
+    <div className="monitoring-table-section">
+      <h2 className="monitoring-section-title">Прогресс изучения</h2>
       {words.length === 0 ? (
         <NoDataScreen />
       ) : (
-        <div className="table-container">
-          <table className="progress-table">
+        <div className="monitoring-table-container">
+          <table className="monitoring-progress-table">
             <thead>
               <tr>
-                <th className="word-column">Слово</th>
+                <th className="monitoring-word-column">Слово</th>
                 {testTypes.map(test => (
-                  <th key={test.type} className="level-column" title={test.label}>
+                  <th key={test.type} className="monitoring-level-column" title={test.label}>
                     {window.innerWidth > 768 ? test.label : test.label.split(' ')[0]}
                   </th>
                 ))}
-                <th className="status-column">Статус</th>
+                <th className="monitoring-status-column">Статус</th>
               </tr>
             </thead>
             <tbody>
@@ -343,35 +343,35 @@ const WordProgressTable = ({ words, getTestCompletionStatus }) => {
                 };
 
                 return (
-                  <tr key={word.id} className="progress-row">
-                    <td className="word-column">
-                      <div className="word-cell">
+                  <tr key={word.id} className="monitoring-progress-row">
+                    <td className="monitoring-word-column">
+                      <div className="monitoring-word-cell">
                         <img 
                           src={word.imageUrl || '/default-word.png'} 
                           alt={word.name} 
                           loading="lazy"
-                          className="word-image"
+                          className="monitoring-word-image"
                           onError={(e) => {
                             e.target.onerror = null;
                             e.target.src = '/default-word.png';
                           }}
                         />
-                        <span className="word-name">{word.name}</span>
+                        <span className="monitoring-word-name">{word.name}</span>
                       </div>
                     </td>
                     {testTypes.map(test => (
-                      <td key={test.type} className="level-column" title={test.label}>
-                        <div className={`level-indicator ${testStatus[test.type] ? 'completed' : ''}`}>
+                      <td key={test.type} className="monitoring-level-column" title={test.label}>
+                        <div className={`monitoring-level-indicator ${testStatus[test.type] ? 'completed' : ''}`}>
                           {testStatus[test.type] ? (
-                            <span className="checkmark">✓</span>
+                            <span className="monitoring-checkmark">✓</span>
                           ) : (
-                            <span className="circle">○</span>
+                            <span className="monitoring-circle">○</span>
                           )}
                         </div>
                       </td>
                     ))}
-                    <td className="status-column">
-                      <div className={`status-indicator ${wordStatus.mastered ? 'mastered' : 'learning'}`}>
+                    <td className="monitoring-status-column">
+                      <div className={`monitoring-status-indicator ${wordStatus.mastered ? 'mastered' : 'learning'}`}>
                         {wordStatus.mastered ? 'Освоено' : 'Изучается'}
                       </div>
                     </td>
@@ -387,17 +387,17 @@ const WordProgressTable = ({ words, getTestCompletionStatus }) => {
 };
 
 const WordCards = ({ words, getWordStatus }) => (
-  <div className="word-cards-section">
-    <h2 className="section-title">Слова урока</h2>
+  <div className="monitoring-cards-section">
+    <h2 className="monitoring-section-title">Слова урока</h2>
     {words.length === 0 ? (
       <NoDataScreen />
     ) : (
-      <div className="word-cards-grid">
+      <div className="monitoring-cards-grid">
         {words.map(word => {
           const status = getWordStatus(word.id);
           return (
-            <div key={word.id} className={`word-card ${status.mastered ? 'mastered' : ''}`}>
-              <div className="word-image">
+            <div key={word.id} className={`monitoring-word-card ${status.mastered ? 'mastered' : ''}`}>
+              <div className="monitoring-card-image">
                 <img 
                   src={word.imageUrl || '/default-word.png'} 
                   alt={word.name} 
@@ -408,11 +408,11 @@ const WordCards = ({ words, getWordStatus }) => (
                   }}
                 />
               </div>
-              <div className="word-info">
+              <div className="monitoring-card-info">
                 <h4>{word.name}</h4>
                 <p>{word.translation}</p>
-                <div className="word-status">
-                  <span className={`status-dot ${status.mastered ? 'mastered' : 'learning'}`}></span>
+                <div className="monitoring-card-status">
+                  <span className={`monitoring-status-dot ${status.mastered ? 'mastered' : 'learning'}`}></span>
                   {status.mastered ? 'Освоено' : 'Изучается'}
                 </div>
               </div>
@@ -428,22 +428,22 @@ const LessonResources = ({ videoUrl, pdfUrl }) => {
   if (!videoUrl && !pdfUrl) return null;
 
   return (
-    <div className="resources-section">
-      <h2 className="section-title">Ресурсы урока</h2>
-      <div className="resources-cards">
+    <div className="monitoring-resources-section">
+      <h2 className="monitoring-section-title">Ресурсы урока</h2>
+      <div className="monitoring-resources-cards">
         {videoUrl && (
-          <div className="resource-card video-resource">
-            <div className="resource-icon-container">
-              <span className="resource-icon">🎥</span>
+          <div className="monitoring-resource-card video-resource">
+            <div className="monitoring-resource-icon-container">
+              <span className="monitoring-resource-icon">🎥</span>
             </div>
-            <div className="resource-content">
+            <div className="monitoring-resource-content">
               <h3>Видео урока</h3>
               <p>Просмотрите видеоурок для лучшего понимания материала</p>
               <a 
                 href={videoUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="resource-button"
+                className="monitoring-resource-button"
               >
                 Смотреть
               </a>
@@ -452,18 +452,18 @@ const LessonResources = ({ videoUrl, pdfUrl }) => {
         )}
         
         {pdfUrl && (
-          <div className="resource-card pdf-resource">
-            <div className="resource-icon-container">
-              <span className="resource-icon">📘</span>
+          <div className="monitoring-resource-card pdf-resource">
+            <div className="monitoring-resource-icon-container">
+              <span className="monitoring-resource-icon">📘</span>
             </div>
-            <div className="resource-content">
+            <div className="monitoring-resource-content">
               <h3>Материалы</h3>
               <p>PDF с дополнительными материалами по уроку</p>
               <a 
                 href={pdfUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="resource-button"
+                className="monitoring-resource-button"
               >
                 Скачать
               </a>
@@ -476,19 +476,19 @@ const LessonResources = ({ videoUrl, pdfUrl }) => {
 };
 
 const LoadingScreen = () => (
-  <div className="loading-screen">
-    <div className="spinner"></div>
+  <div className="monitoring-loading-screen">
+    <div className="monitoring-spinner"></div>
     <p>Загрузка данных...</p>
   </div>
 );
 
 const ErrorScreen = ({ message }) => (
-  <div className="error-screen">
-    <div className="error-icon">⚠️</div>
+  <div className="monitoring-error-screen">
+    <div className="monitoring-error-icon">⚠️</div>
     <h3>Ошибка загрузки</h3>
     <p>{message}</p>
     <button 
-      className="retry-button" 
+      className="monitoring-retry-button" 
       onClick={() => window.location.reload()}
     >
       Попробовать снова
@@ -497,8 +497,8 @@ const ErrorScreen = ({ message }) => (
 );
 
 const NoDataScreen = () => (
-  <div className="no-data-screen">
-    <div className="no-data-icon">📭</div>
+  <div className="monitoring-no-data-screen">
+    <div className="monitoring-no-data-icon">📭</div>
     <p>Нет данных для отображения</p>
   </div>
 );

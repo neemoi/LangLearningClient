@@ -65,16 +65,16 @@ const NounsPage = () => {
 
   if (loading) {
     return (
-      <div className="nouns-loader">
-        <Spinner animation="grow" variant="primary" className="nouns-spinner" />
+      <div className="nouns-loading-container">
+        <Spinner animation="grow" variant="primary" className="nouns-loading-spinner" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="nouns-loader">
-        <Alert variant="danger" className="nouns-alert animate">
+      <div className="nouns-error-container">
+        <Alert variant="danger" className="nouns-error-alert animate">
           <Alert.Heading>Ошибка загрузки</Alert.Heading>
           <p>{error}</p>
         </Alert>
@@ -83,31 +83,31 @@ const NounsPage = () => {
   }
 
   return (
-    <div className="nouns-app">
+    <div className="nouns-container">
       <Navigation isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
       <Sidebar isOpen={isSidebarOpen} />
 
-      <main className={`nouns-main ${isSidebarOpen ? 'with-sidebar' : 'no-sidebar'}`}>
-        <div className="nouns-content-wrapper">
-          <div className="nouns-center">
-            <div className={`nouns-back-container ${animate ? 'animate' : ''}`}>
+      <main className={`nouns-main-content ${isSidebarOpen ? 'with-sidebar' : 'without-sidebar'}`}>
+        <div className="nouns-content-container">
+          <div className="nouns-center-content">
+            <div className={`nouns-back-section ${animate ? 'animate' : ''}`}>
               <button 
                 onClick={handleBackToLesson} 
-                className="nouns-back-btn"
+                className="nouns-back-button"
               >
-                <span className="nouns-back-arrow">←</span>
-                <span className="nouns-back-text">Назад к уроку</span>
+                <span className="nouns-back-icon">←</span>
+                <span className="nouns-back-label">Назад к уроку</span>
               </button>
             </div>
 
             {showInfoBox && (
-              <div className={`nouns-info ${animate ? 'animate' : ''}`}>
+              <div className={`nouns-info-box ${animate ? 'animate' : ''}`}>
                 <p className="nouns-info-text">
                   Все эти существительные, включённые в 800+ Международный курс английского языка,
                   сортированы для вашего удобства.
                 </p>
                 <button
-                  className="nouns-close-btn"
+                  className="nouns-close-button"
                   onClick={() => setShowInfoBox(false)}
                   aria-label="Закрыть"
                 >
@@ -116,27 +116,27 @@ const NounsPage = () => {
               </div>
             )}
 
-            <div className={`nouns-header ${animate ? 'animate' : ''}`}>
-              <h1 className="nouns-title">Существительные</h1>
-              <p className="nouns-subtitle">Выберите букву для просмотра слов</p>
+            <div className={`nouns-header-section ${animate ? 'animate' : ''}`}>
+              <h1 className="nouns-main-title">Существительные</h1>
+              <p className="nouns-subtitle-text">Выберите букву для просмотра слов</p>
             </div>
 
-            <div className="nouns-grid-container">
+            <div className="nouns-grid-wrapper">
               <div 
-                className="nouns-grid" 
+                className="nouns-letters-grid" 
                 ref={gridRef}
               >
                 {alphabetLetters.map((letter, index) => (
                   <Link
                     key={letter.id}
                     to={`/alphabet/${letter.symbol}`}
-                    className="nouns-letter-card"
+                    className="nouns-letter-item"
                     style={{ transitionDelay: `${index * 0.05}s` }}
                   >
-                    <div className="nouns-circle">
-                      <span className="nouns-char">{letter.symbol}</span>
+                    <div className="nouns-letter-circle">
+                      <span className="nouns-letter-symbol">{letter.symbol}</span>
                     </div>
-                    <div className="nouns-count">{letter.words.length}</div>
+                    <div className="nouns-words-count">{letter.words.length}</div>
                   </Link>
                 ))}
               </div>

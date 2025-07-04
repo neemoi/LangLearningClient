@@ -16,9 +16,11 @@ import {
   FaTrash,
   FaPlusCircle,
   FaQuestionCircle,
-  FaSearch
+  FaSearch,
+  FaInfoCircle
 } from 'react-icons/fa';
 import QuizQuestions from './../quiz/QuizQuestions';
+import './LessonTabs.css';
 
 const LessonTabs = ({
   activeKey,
@@ -70,6 +72,16 @@ const LessonTabs = ({
     phrase.translation.toLowerCase().includes(phrasesSearchTerm.toLowerCase())
   ) || [];
 
+  const getQuizTypeName = (type) => {
+    switch(type) {
+      case 'NOUNS': return 'Существительные';
+      case 'VERBS': return 'Глаголы';
+      case 'GRAMMAR': return 'Грамматика';
+      case 'VOCABULARY': return 'Лексика';
+      default: return 'Общий тест';
+    }
+  };
+
   return (
     <Tabs
       activeKey={activeKey}
@@ -77,25 +89,22 @@ const LessonTabs = ({
       className="lesson-tabs mb-3"
       fill
     >
-      <Tab
-        eventKey="words"
-        title={
-          <div className="d-flex align-items-center">
-            <span>Слова ({lesson.words?.length || 0})</span>
-            <Button
-              variant="link"
-              size="sm"
-              className="ms-2 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowWordAddModal(true);
-              }}
-            >
-              <FaPlusCircle size={16} />
-            </Button>
-          </div>
-        }
-      >
+      <Tab eventKey="words" title={
+        <div className="d-flex align-items-center">
+          <span>Слова ({lesson.words?.length || 0})</span>
+          <Button
+            variant="link"
+            size="sm"
+            className="ms-2 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowWordAddModal(true);
+            }}
+          >
+            <FaPlusCircle size={16} />
+          </Button>
+        </div>
+      }>
         <div className="mb-3">
           <InputGroup>
             <InputGroup.Text>
@@ -112,7 +121,7 @@ const LessonTabs = ({
         <div className="words-grid">
           {filteredWords.length > 0 ? (
             filteredWords.map(word => (
-              <Card key={word.id} className="mb-3">
+              <Card key={word.id} className="mb-3 word-card">
                 <Card.Body>
                   <div className="d-flex justify-content-between">
                     <div>
@@ -126,7 +135,7 @@ const LessonTabs = ({
                       <img
                         src={word.imageUrl}
                         alt={word.name}
-                        style={{ width: 60, height: 60, objectFit: 'cover' }}
+                        className="word-image"
                         onError={(e) => e.target.style.display = 'none'}
                       />
                     )}
@@ -159,25 +168,22 @@ const LessonTabs = ({
         </div>
       </Tab>
 
-      <Tab
-        eventKey="phrases"
-        title={
-          <div className="d-flex align-items-center">
-            <span>Фразы ({lesson.phrases?.length || 0})</span>
-            <Button
-              variant="link"
-              size="sm"
-              className="ms-2 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPhraseAddModal(true);
-              }}
-            >
-              <FaPlusCircle size={16} />
-            </Button>
-          </div>
-        }
-      >
+      <Tab eventKey="phrases" title={
+        <div className="d-flex align-items-center">
+          <span>Фразы ({lesson.phrases?.length || 0})</span>
+          <Button
+            variant="link"
+            size="sm"
+            className="ms-2 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowPhraseAddModal(true);
+            }}
+          >
+            <FaPlusCircle size={16} />
+          </Button>
+        </div>
+      }>
         <div className="mb-3">
           <InputGroup>
             <InputGroup.Text>
@@ -191,14 +197,14 @@ const LessonTabs = ({
           </InputGroup>
         </div>
 
-        <Accordion>
+        <Accordion className="phrases-accordion">
           {filteredPhrases.length > 0 ? (
             filteredPhrases.map((phrase, idx) => (
-              <Accordion.Item eventKey={idx.toString()} key={phrase.id}>
-                <Accordion.Header>
+              <Accordion.Item eventKey={idx.toString()} key={phrase.id} className="phrase-item">
+                <Accordion.Header className="phrase-header">
                   <div className="d-flex justify-content-between w-100">
-                    <span>{phrase.phraseText}</span>
-                    <div className="d-flex">
+                    <span className="phrase-text">{phrase.phraseText}</span>
+                    <div className="phrase-actions">
                       <Button
                         variant="outline-primary"
                         size="sm"
@@ -223,13 +229,13 @@ const LessonTabs = ({
                     </div>
                   </div>
                 </Accordion.Header>
-                <Accordion.Body>
+                <Accordion.Body className="phrase-body">
                   <p><strong>Перевод:</strong> {phrase.translation}</p>
                   {phrase.imageUrl && (
                     <img
                       src={phrase.imageUrl}
                       alt={phrase.phraseText}
-                      style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain' }}
+                      className="phrase-image"
                       onError={(e) => e.target.style.display = 'none'}
                     />
                   )}
@@ -244,25 +250,22 @@ const LessonTabs = ({
         </Accordion>
       </Tab>
 
-      <Tab
-        eventKey="quizzes"
-        title={
-          <div className="d-flex align-items-center">
-            <span>Тесты ({lesson.quizzes?.length || 0})</span>
-            <Button
-              variant="link"
-              size="sm"
-              className="ms-2 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowQuizAddModal(true);
-              }}
-            >
-              <FaPlusCircle size={16} />
-            </Button>
-          </div>
-        }
-      >
+      <Tab eventKey="quizzes" title={
+        <div className="d-flex align-items-center">
+          <span>Тесты ({lesson.quizzes?.length || 0})</span>
+          <Button
+            variant="link"
+            size="sm"
+            className="ms-2 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowQuizAddModal(true);
+            }}
+          >
+            <FaPlusCircle size={16} />
+          </Button>
+        </div>
+      }>
         <div className="quizzes-container">
           {isRefreshing ? (
             <div className="text-center p-4">
@@ -271,45 +274,69 @@ const LessonTabs = ({
           ) : lesson.quizzes?.length > 0 ? (
             lesson.quizzes.map(quiz => (
               <div key={quiz.id} className="quiz-item mb-3">
-                <Card>
-                  <Card.Body>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <Card.Title>
-                          {quiz.title || (quiz.type === 'NOUNS' ? 'Тест по существительным' : 'Грамматический тест')}
-                        </Card.Title>
-                        <Card.Subtitle className="mb-2 text-muted">
-                          Создан: {new Date(quiz.createdAt).toLocaleDateString()}
-                          {quiz.questions?.length > 0 && (
-                            <span className="ms-2">
-                              <Badge bg="info">
-                                Вопросов: {quiz.questions.length}
-                              </Badge>
-                            </span>
+                <Card className="quiz-card">
+                  <Card.Body className="p-3">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div className="flex-grow-1 me-3">
+                        <div className="d-flex align-items-center mb-2">
+                          <h3 className="quiz-title mb-0">
+                            {quiz.title || getQuizTypeName(quiz.type)}
+                          </h3>
+                          <Badge bg="info" className="ms-2">
+                            {getQuizTypeName(quiz.type)}
+                          </Badge>
+                        </div>
+                        
+                        <div className="quiz-info">
+                          <div className="d-flex flex-wrap gap-3 mb-2">
+                            <div className="d-flex align-items-center">
+                              <FaQuestionCircle className="text-muted me-2" />
+                              <span>{quiz.questions?.length || 0} вопросов</span>
+                            </div>
+                            <div className="d-flex align-items-center">
+                              <FaInfoCircle className="text-muted me-2" />
+                              <span>Создан: {new Date(quiz.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          
+                          {quiz.description && (
+                            <div className="quiz-description">
+                              <p className="mb-0">{quiz.description}</p>
+                            </div>
                           )}
-                        </Card.Subtitle>
+                        </div>
                       </div>
-                      <div>
+                      
+                      <div className="quiz-actions d-flex flex-column">
                         <Button
                           variant="outline-primary"
                           size="sm"
-                          className="me-2"
-                          onClick={() => openQuizEditModal(quiz)}
+                          className="mb-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openQuizEditModal(quiz);
+                          }}
                         >
                           <FaEdit />
                         </Button>
                         <Button
                           variant="outline-danger"
                           size="sm"
-                          className="me-2"
-                          onClick={() => handleDeleteQuiz(quiz.id)}
+                          className="mb-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteQuiz(quiz.id);
+                          }}
                         >
                           <FaTrash />
                         </Button>
                         <Button
                           variant={expandedQuiz === quiz.id ? 'primary' : 'outline-secondary'}
                           size="sm"
-                          onClick={() => toggleQuizQuestions(quiz.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleQuizQuestions(quiz.id);
+                          }}
                         >
                           <FaQuestionCircle />
                         </Button>
@@ -317,7 +344,7 @@ const LessonTabs = ({
                     </div>
 
                     {expandedQuiz === quiz.id && (
-                      <div className="mt-3">
+                      <div className="quiz-questions-wrapper mt-3">
                         <QuizQuestions
                           questions={getQuizQuestions(quiz.id)}
                           quizId={quiz.id}

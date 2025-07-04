@@ -5,14 +5,14 @@ import Navigation from '../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../components/layout/Sidebar/Sidebar';
 import Container from 'react-bootstrap/Container';
 import API_CONFIG from '../../../components/src/config';
-import './../css/WordsByLetterPage.css';
+import './css/WordsByBasicQuestionsPage.css';
 
-const WordsByLetterPage = () => {
-  const { letter } = useParams();
+const WordsByBasicQuestionsPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [data, setData] = useState({
-    letter: null,
+    category: null,
     words: [],
     loading: true,
     error: null,
@@ -45,28 +45,20 @@ const WordsByLetterPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const lettersResponse = await fetch(`${API_CONFIG.BASE_URL}/api/AlphabetLetter`);
-        if (!lettersResponse.ok) throw new Error(`Ошибка: ${lettersResponse.status}`);
-
-        const allLetters = await lettersResponse.json();
-        const foundLetter = allLetters.find(l => l.symbol === letter.toUpperCase());
+        const response = await fetch(`${API_CONFIG.BASE_URL}/api/MainQuestions/categories/${id}`);
         
-        if (!foundLetter) throw new Error('Буква не найдена');
-        
-        const letterResponse = await fetch(`${API_CONFIG.BASE_URL}/api/AlphabetLetter/${foundLetter.id}`);
-        if (!letterResponse.ok) throw new Error(`Ошибка: ${letterResponse.status}`);
+        if (!response.ok) throw new Error(`Ошибка: ${response.status}`);
 
-        const result = await letterResponse.json();
+        const result = await response.json();
         
         const words = Array.isArray(result.words) ? result.words.map(item => ({
           id: item.id,
           name: item.name,
-          translation: item.translation,
-          imagePath: item.imageUrl || null
+          imagePath: item.imagePath || null
         })) : [];
 
         setData({
-          letter: { id: result.id, symbol: result.symbol },
+          category: { id: result.id, name: result.name },
           words: words,
           loading: false,
           error: null,
@@ -93,7 +85,7 @@ const WordsByLetterPage = () => {
         synthRef.current.onvoiceschanged = null;
       }
     };
-  }, [letter]);
+  }, [id]);
 
   const initSpeech = () => {
     if (!window.speechSynthesis) {
@@ -132,7 +124,7 @@ const WordsByLetterPage = () => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = speech.voices[0];
       utterance.lang = 'en-US';
-      utterance.rate = 0.8;
+      utterance.rate = 0.9;
       utterance.pitch = 1;
 
       utterance.onstart = () => {
@@ -251,13 +243,13 @@ const WordsByLetterPage = () => {
 
   if (data.loading) {
     return (
-      <div className="alphabet-page-layout">
+      <div className="basic-questions-page-layout">
         <Navigation
           isSidebarOpen={ui.sidebarOpen}
           onToggleSidebar={() => setUi(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }))}
         />
         <Sidebar isOpen={ui.sidebarOpen} />
-        <main className={`alphabet-main-content ${ui.sidebarOpen ? 'sidebar-open' : ''}`}>
+        <main className={`basic-questions-main-content ${ui.sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="loading-spinner">Loading...</div>
         </main>
       </div>
@@ -266,13 +258,13 @@ const WordsByLetterPage = () => {
 
   if (data.error) {
     return (
-      <div className="alphabet-page-layout">
+      <div className="basic-questions-page-layout">
         <Navigation
           isSidebarOpen={ui.sidebarOpen}
           onToggleSidebar={() => setUi(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }))}
         />
         <Sidebar isOpen={ui.sidebarOpen} />
-        <main className={`alphabet-main-content ${ui.sidebarOpen ? 'sidebar-open' : ''}`}>
+        <main className={`basic-questions-main-content ${ui.sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="error-message">Error: {data.error}</div>
         </main>
       </div>
@@ -280,43 +272,41 @@ const WordsByLetterPage = () => {
   }
 
   return (
-    <div className="alphabet-page">
+    <div className="basic-questions-page">
       <Navigation 
         sidebarOpen={ui.sidebarOpen}
         onToggleSidebar={() => setUi(prev => ({ ...prev, sidebarOpen: !prev.sidebarOpen }))} 
       />
       
-      <div className="alphabet-content-wrapper">
+      <div className="basic-questions-content-wrapper">
         <Sidebar isOpen={ui.sidebarOpen} />
         
-        <Container fluid className={`alphabet-main-content ${ui.sidebarOpen ? '' : 'sidebar-closed'}`}>
-        <header className={`alphabet-header ${ui.animate ? 'fade-in' : ''}`}>
-          <div className="alphabet-header-row">
-            <button 
-              onClick={() => navigate('/nouns')} 
-              className="alphabet-back-btn"
-            >
-              <FaArrowLeft className="alphabet-back-icon" /> Назад к Алфавиту
-            </button>
-            
-            <div className="alphabet-header-spacer"></div>
-            
-            {data.letter && (
-              <h1 className="alphabet-title">
-                Буква {data.letter.symbol}
-                {data.words.length > 0 && (
-                  <span className="alphabet-words-count">{data.words.length} слов</span>
-                )}
-              </h1>
-            )}
-          </div>
-        </header>
+        <Container fluid className={`basic-questions-main-content ${ui.sidebarOpen ? '' : 'sidebar-closed'}`}>
+          <header className={`basic-questions-header ${ui.animate ? 'fade-in' : ''}`}>
+            <div className="basic-questions-header-content">
+              <button 
+                onClick={() => navigate('/mini-lessons/basic-questions')} 
+                className="basic-questions-back-btn"
+              >
+                <FaArrowLeft className="basic-questions-back-icon" /> Назад к Основным вопросам
+              </button>
+              
+              {data.category && (
+                <h1 className="basic-questions-category-title">
+                  {data.category.name}
+                  {data.words.length > 0 && (
+                    <span className="basic-questions-words-count">{data.words.length} слов</span>
+                  )}
+                </h1>
+              )}
+            </div>
+          </header>
 
           {data.words.length > 0 ? (
             <>
-              <section className={`alphabet-word-player ${ui.animate ? 'slide-up' : ''}`}>
-                <div className="alphabet-player-content">
-                  <div className="alphabet-word-visual">
+              <section className={`basic-questions-word-player ${ui.animate ? 'slide-up' : ''}`}>
+                <div className="basic-questions-player-content">
+                  <div className="basic-questions-word-visual">
                     {data.currentWord?.imagePath ? (
                       <img 
                         src={data.currentWord.imagePath}
@@ -324,26 +314,25 @@ const WordsByLetterPage = () => {
                         onError={(e) => e.target.style.display = 'none'}
                       />
                     ) : (
-                      <div className="alphabet-letter-fallback">
+                      <div className="basic-questions-letter-fallback">
                         {data.currentWord?.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                     )}
                   </div>
                   
-                  <div className="alphabet-word-details">
-                    <div className="alphabet-word-text-container">
+                  <div className="basic-questions-word-details">
+                    <div className="basic-questions-word-text-container">
                       <h2>{data.currentWord?.name || 'Выберите слово'}</h2>
-                      <p className="alphabet-word-translation">{data.currentWord?.translation || ''}</p>
-                      <p className="alphabet-position">
+                      <p className="basic-questions-position">
                         {data.words.findIndex(w => w.id === data.currentWord?.id) + 1} из {data.words.length}
                       </p>
                     </div>
                     
-                    <div className="alphabet-player-controls">
+                    <div className="basic-questions-player-controls">
                       <button 
                         onClick={() => navigateWord('prev')} 
                         disabled={data.words.length <= 1}
-                        className="alphabet-control-button alphabet-prev-button"
+                        className="basic-questions-control-button basic-questions-prev-button"
                       >
                         <svg width="24" height="24" viewBox="0 0 24 24">
                           <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
@@ -358,7 +347,7 @@ const WordsByLetterPage = () => {
                             speakWord(data.currentWord);
                           }
                         }} 
-                        className={`alphabet-play-button ${speech.isSpeaking ? 'active' : ''}`}
+                        className={`basic-questions-play-button ${speech.isSpeaking ? 'active' : ''}`}
                         disabled={!data.currentWord}
                       >
                         {speech.isSpeaking ? (
@@ -375,7 +364,7 @@ const WordsByLetterPage = () => {
                       <button 
                         onClick={() => navigateWord('next')} 
                         disabled={data.words.length <= 1}
-                        className="alphabet-control-button alphabet-next-button"
+                        className="basic-questions-control-button basic-questions-next-button"
                       >
                         <svg width="24" height="24" viewBox="0 0 24 24">
                           <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
@@ -386,7 +375,7 @@ const WordsByLetterPage = () => {
                     {speech.showStopButton && (
                       <button
                         onClick={stopSpeaking}
-                        className="alphabet-stop-button"
+                        className="basic-questions-stop-button"
                       >
                         <svg width="24" height="24" viewBox="0 0 24 24">
                           <path d="M6 6h12v12H6z"/>
@@ -400,30 +389,30 @@ const WordsByLetterPage = () => {
               {groupWords(data.words).map((group, i) => (
                 <section 
                   key={`group-${i}`}
-                  className={`alphabet-word-group ${ui.animate ? 'fade-in' : ''}`}
+                  className={`basic-questions-word-group ${ui.animate ? 'fade-in' : ''}`}
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
-                  <div className="alphabet-group-header">
+                  <div className="basic-questions-group-header">
                     <h3>Группа {i + 1} <span>({group.length} слов)</span></h3>
                     <button
                       onClick={() => speakGroup(group, i)}
                       className={speech.activeGroup === i ? 'active' : ''}
                       disabled={speech.isSpeaking && speech.activeGroup !== i}
                     >
-                      {speech.activeGroup === i ? 'Остановить' : 'Озвучить группу'}
+                      {speech.activeGroup === i ? '⏹ Остановить' : '▶ Озвучить группу'}
                     </button>
                   </div>
                   
-                  <div className="alphabet-words-grid">
+                  <div className="basic-questions-words-grid">
                     {group.map((word, j) => (
                       <article 
                         key={`word-${word.id}-${j}`}
-                        className={`alphabet-word-card ${data.currentWord?.id === word.id ? 'active' : ''} ${
+                        className={`basic-questions-word-card ${data.currentWord?.id === word.id ? 'active' : ''} ${
                           speech.activeGroup === i && speech.currentWordIndex === j ? 'speaking' : ''
                         }`}
                         onClick={() => setData(prev => ({ ...prev, currentWord: word }))}
                       >
-                        <div className="alphabet-card-image">
+                        <div className="basic-questions-card-image">
                           {word.imagePath ? (
                             <img 
                               src={word.imagePath}
@@ -431,14 +420,13 @@ const WordsByLetterPage = () => {
                               onError={(e) => e.target.style.display = 'none'}
                             />
                           ) : (
-                            <div className="alphabet-letter-fallback small">
+                            <div className="basic-questions-letter-fallback small">
                               {word.name?.charAt(0)?.toUpperCase() || '?'}
                             </div>
                           )}
                         </div>
-                        <div className="alphabet-card-body">
+                        <div className="basic-questions-card-body">
                           <h4>{word.name}</h4>
-                          <p className="alphabet-card-translation">{word.translation}</p>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
@@ -455,10 +443,10 @@ const WordsByLetterPage = () => {
               ))}
             </>
           ) : (
-            <div className={`alphabet-empty-state ${ui.animate ? 'bounce-in' : ''}`}>
-              <div className="alphabet-empty-icon">📖</div>
+            <div className={`basic-questions-empty-state ${ui.animate ? 'bounce-in' : ''}`}>
+              <div className="basic-questions-empty-icon">📖</div>
               <h3>Нет слов</h3>
-              <p>Для этой буквы пока нет слов для изучения</p>
+              <p>В этой категории пока нет слов для изучения</p>
             </div>
           )}
         </Container>
@@ -467,4 +455,4 @@ const WordsByLetterPage = () => {
   );
 };
 
-export default WordsByLetterPage;
+export default WordsByBasicQuestionsPage;

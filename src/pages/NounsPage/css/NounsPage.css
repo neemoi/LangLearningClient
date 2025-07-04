@@ -1,17 +1,17 @@
 :root {
   --nouns-sidebar-width: 280px;
-  --nouns-primary: #51b946;
-  --nouns-primary-light: #f0f4f8;
-  --nouns-primary-hover: #000000;
-  --nouns-text-dark: #2c3e50;
-  --nouns-text-light: #7f8c8d;
+  --nouns-primary-color: #51b946;
+  --nouns-light-bg: #f0f4f8;
+  --nouns-hover-color: #000000;
+  --nouns-dark-text: #2c3e50;
+  --nouns-light-text: #7f8c8d;
   --nouns-border-radius: 12px;
-  --nouns-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  --nouns-shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+  --nouns-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --nouns-hover-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   --nouns-transition: all 0.3s ease;
-  --nouns-background: #ffffff;
+  --nouns-bg-color: #ffffff;
   --nouns-info-bg: #f8f9fa;
-  --nouns-border: #dfe6e9;
+  --nouns-border-color: #dfe6e9;
 }
 
 @keyframes fadeIn {
@@ -41,14 +41,14 @@
   100% { transform: scale(1); }
 }
 
-.nouns-app {
+.nouns-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--nouns-background);
+  background-color: var(--nouns-bg-color);
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-.nouns-main {
+.nouns-main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -58,15 +58,15 @@
   width: 100%;
 }
 
-.nouns-main.with-sidebar {
+.nouns-main-content.with-sidebar {
   margin-left: var(--nouns-sidebar-width);
 }
 
-.nouns-main.no-sidebar {
+.nouns-main-content.without-sidebar {
   margin-left: 0;
 }
 
-.nouns-content-wrapper {
+.nouns-content-container {
   padding: 20px;
   flex-grow: 1;
   display: flex;
@@ -75,7 +75,7 @@
   width: 100%;
 }
 
-.nouns-center {
+.nouns-center-content {
   width: 100%;
   max-width: 100%;
   display: flex;
@@ -86,7 +86,7 @@
   padding: 0 20px;
 }
 
-.nouns-back-container {
+.nouns-back-section {
   width: 100%;
   max-width: 1200px;
   display: flex;
@@ -97,15 +97,15 @@
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-.nouns-back-container.animate {
+.nouns-back-section.animate {
   opacity: 1;
   transform: translateX(0);
 }
 
-.nouns-back-btn {
-  background: none;
+.nouns-back-button {
+  background: transparent;
   border: none;
-  color: var(--nouns-text-dark);
+  color: var(--nouns-dark-text);
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -116,29 +116,29 @@
   transition: var(--nouns-transition);
 }
 
-.nouns-back-btn:hover {
-  background-color: var(--nouns-primary-light);
-  color: var(--nouns-primary);
+.nouns-back-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--nouns-primary-color);
 }
 
-.nouns-back-arrow {
+.nouns-back-icon {
   font-size: 20px;
   font-weight: bold;
   transition: var(--nouns-transition);
 }
 
-.nouns-back-btn:hover .nouns-back-arrow {
+.nouns-back-button:hover .nouns-back-icon {
   transform: scale(1.2);
 }
 
-.nouns-info {
+.nouns-info-box {
   position: relative;
   background-color: var(--nouns-info-bg);
-  border: 1px solid var(--nouns-border);
+  border: 1px solid var(--nouns-border-color);
   border-radius: var(--nouns-border-radius);
   padding: 1rem 2.5rem 1rem 1.5rem;
-  color: var(--nouns-text-dark);
-  box-shadow: var(--nouns-shadow);
+  color: var(--nouns-dark-text);
+  box-shadow: var(--nouns-box-shadow);
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -147,7 +147,7 @@
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-.nouns-info.animate {
+.nouns-info-box.animate {
   opacity: 1;
   transform: translateY(0);
 }
@@ -156,10 +156,10 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: var(--nouns-text-dark);
+  color: var(--nouns-dark-text);
 }
 
-.nouns-close-btn {
+.nouns-close-button {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
@@ -167,18 +167,18 @@
   border: none;
   font-size: 1.5rem;
   line-height: 1;
-  color: var(--nouns-text-light);
+  color: var(--nouns-light-text);
   cursor: pointer;
   padding: 0.25rem;
   transition: var(--nouns-transition);
 }
 
-.nouns-close-btn:hover {
-  color: var(--nouns-primary);
+.nouns-close-button:hover {
+  color: var(--nouns-primary-color);
   transform: scale(1.1);
 }
 
-.nouns-header {
+.nouns-header-section {
   text-align: center;
   width: 100%;
   max-width: 1200px;
@@ -188,20 +188,20 @@
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
-.nouns-header.animate {
+.nouns-header-section.animate {
   opacity: 1;
   transform: translateY(0);
 }
 
-.nouns-title {
+.nouns-main-title {
   font-size: 2.2rem;
   font-weight: 700;
-  color: var(--nouns-text-dark);
+  color: var(--nouns-dark-text);
   margin-bottom: 0.25rem;
   position: relative;
 }
 
-.nouns-title::after {
+.nouns-main-title::after {
   content: '';
   position: absolute;
   bottom: -5px;
@@ -209,7 +209,7 @@
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background-color: var(--nouns-primary);
+  background-color: var(--nouns-primary-color);
   border-radius: 2px;
   animation: underlineGrow 0.8s ease-out forwards;
 }
@@ -219,21 +219,21 @@
   to { width: 60px; }
 }
 
-.nouns-subtitle {
+.nouns-subtitle-text {
   font-size: 1.1rem;
-  color: var(--nouns-text-light);
+  color: var(--nouns-light-text);
   margin: 0;
   animation: fadeIn 1s ease-out;
 }
 
-.nouns-grid-container {
+.nouns-grid-wrapper {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-.nouns-grid {
+.nouns-letters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 1.5rem;
@@ -241,11 +241,11 @@
   margin-top: 1rem;
 }
 
-.nouns-grid.animate .nouns-letter-card {
+.nouns-letters-grid.animate .nouns-letter-item {
   animation: bounceIn 0.6s ease-out forwards;
 }
 
-.nouns-letter-card {
+.nouns-letter-item {
   text-decoration: none;
   display: flex;
   flex-direction: column;
@@ -255,58 +255,58 @@
   transform: scale(0.9);
 }
 
-.nouns-grid.animate .nouns-letter-card {
+.nouns-letters-grid.animate .nouns-letter-item {
   opacity: 1;
   transform: scale(1);
 }
 
-.nouns-letter-card:hover {
+.nouns-letter-item:hover {
   transform: translateY(-5px) scale(1.05);
 }
 
-.nouns-circle {
+.nouns-letter-circle {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: var(--nouns-primary-light);
+  background-color: var(--nouns-light-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0.75rem;
   transition: var(--nouns-transition);
-  box-shadow: var(--nouns-shadow);
+  box-shadow: var(--nouns-box-shadow);
 }
 
-.nouns-letter-card:hover .nouns-circle {
-  background-color: var(--nouns-primary);
-  box-shadow: var(--nouns-shadow-hover);
+.nouns-letter-item:hover .nouns-letter-circle {
+  background-color: var(--nouns-primary-color);
+  box-shadow: var(--nouns-hover-shadow);
 }
 
-.nouns-char {
+.nouns-letter-symbol {
   font-size: 2.2rem;
   font-weight: 700;
-  color: var(--nouns-primary);
+  color: var(--nouns-primary-color);
   transition: var(--nouns-transition);
 }
 
-.nouns-letter-card:hover .nouns-char {
+.nouns-letter-item:hover .nouns-letter-symbol {
   color: white;
   transform: scale(1.1);
 }
 
-.nouns-count {
+.nouns-words-count {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--nouns-text-light);
+  color: var(--nouns-light-text);
   transition: var(--nouns-transition);
 }
 
-.nouns-letter-card:hover .nouns-count {
-  color: var(--nouns-primary);
+.nouns-letter-item:hover .nouns-words-count {
+  color: var(--nouns-primary-color);
   transform: scale(1.1);
 }
 
-.nouns-loader {
+.nouns-loading-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -314,11 +314,19 @@
   width: 100%;
 }
 
-.nouns-spinner {
+.nouns-loading-spinner {
   animation: pulse 1.5s infinite ease-in-out;
 }
 
-.nouns-alert {
+.nouns-error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+}
+
+.nouns-error-alert {
   border-radius: var(--nouns-border-radius);
   max-width: 500px;
   width: 90%;
@@ -327,67 +335,67 @@
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-.nouns-alert.animate {
+.nouns-error-alert.animate {
   opacity: 1;
   transform: scale(1);
 }
 
 @media (max-width: 1200px) {
-  .nouns-grid {
+  .nouns-letters-grid {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   }
 }
 
 @media (max-width: 992px) {
-  .nouns-grid {
+  .nouns-letters-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
 
-  .nouns-circle {
+  .nouns-letter-circle {
     width: 70px;
     height: 70px;
   }
 }
 
 @media (max-width: 768px) {
-  .nouns-main.with-sidebar {
+  .nouns-main-content.with-sidebar {
     margin-left: 0;
   }
 
-  .nouns-title {
+  .nouns-main-title {
     font-size: 2rem;
   }
 
-  .nouns-grid {
+  .nouns-letters-grid {
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     gap: 1rem;
   }
 
-  .nouns-circle {
+  .nouns-letter-circle {
     width: 60px;
     height: 60px;
   }
 
-  .nouns-char {
+  .nouns-letter-symbol {
     font-size: 1.8rem;
   }
 }
 
 @media (max-width: 576px) {
-  .nouns-main {
+  .nouns-main-content {
     padding-top: 50px;
   }
 
-  .nouns-grid {
+  .nouns-letters-grid {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 
-  .nouns-circle {
+  .nouns-letter-circle {
     width: 50px;
     height: 50px;
   }
 
-  .nouns-count {
+  .nouns-words-count {
     font-size: 0.8rem;
   }
 }

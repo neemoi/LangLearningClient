@@ -91,22 +91,22 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
 
   if (loading) {
     return (
-      <div className="quiz-loading">
-        <div className="quiz-loading-spinner"></div>
+      <div className="knowledge-loader">
+        <div className="knowledge-spinner"></div>
         <p>Загрузка данных прогресса...</p>
       </div>
     );
   }
 
   return (
-    <div className="quiz-wrapper">
-      <div className="quiz-columns">
-        <div className="quiz-column">
-          <div className="quiz-block">
-            <h3 className="quiz-title">Существительные</h3>
-            <div className="quiz-list">
+    <div className="knowledge-container">
+      <div className="knowledge-sections">
+        <div className="knowledge-section">
+          <div className="knowledge-card">
+            <h3 className="knowledge-heading">Существительные</h3>
+            <div className="knowledge-items">
               {quizData.nouns.map((quiz) => (
-                <QuizItem
+                <KnowledgeItem
                   key={quiz.id}
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
@@ -119,12 +119,12 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
           </div>
         </div>
 
-        <div className="quiz-column">
-          <div className="quiz-block">
-            <h3 className="quiz-title">Грамматика</h3>
-            <div className="quiz-list">
+        <div className="knowledge-section">
+          <div className="knowledge-card">
+            <h3 className="knowledge-heading">Грамматика</h3>
+            <div className="knowledge-items">
               {quizData.grammar.map((quiz) => (
-                <QuizItem
+                <KnowledgeItem
                   key={quiz.id}
                   quiz={quiz}
                   hoveredQuiz={hoveredQuiz}
@@ -141,35 +141,35 @@ const LessonQuizzes = ({ startQuiz, lessonId }) => {
   );
 };
 
-const QuizItem = ({ quiz, hoveredQuiz, setHoveredQuiz, startQuiz, score }) => {
+const KnowledgeItem = ({ quiz, hoveredQuiz, setHoveredQuiz, startQuiz, score }) => {
   const getProgressColor = (score) => {
-    if (score <= 30) return 'quiz-progress-red';
-    if (score <= 70) return 'quiz-progress-yellow';
-    return 'quiz-progress-green';
+    if (score <= 30) return 'knowledge-meter-red';
+    if (score <= 70) return 'knowledge-meter-yellow';
+    return 'knowledge-meter-green';
   };
 
   return (
     <div
-      className={`quiz-item ${hoveredQuiz === quiz.id ? 'quiz-item-hovered' : ''}`}
+      className={`knowledge-unit ${hoveredQuiz === quiz.id ? 'knowledge-unit-active' : ''}`}
       onClick={startQuiz}
       onMouseEnter={() => setHoveredQuiz(quiz.id)}
       onMouseLeave={() => setHoveredQuiz(null)}
     >
-      <div className="quiz-icon-wrapper large">
-        <img src={quiz.icon} alt={quiz.tooltip} className="quiz-icon" />
+      <div className="knowledge-icon-holder big">
+        <img src={quiz.icon} alt={quiz.tooltip} className="knowledge-icon" />
       </div>
 
-      <div className="quiz-progress-bar-bg large">
+      <div className="knowledge-meter-bg big">
         <div
-          className={`quiz-progress-bar-fill ${getProgressColor(score)}`}
+          className={`knowledge-meter-fill ${getProgressColor(score)}`}
           style={{ width: `${score}%` }}
         />
       </div>
 
-      <div className="quiz-progress-text">{score}%</div>
+      <div className="knowledge-score">{score}%</div>
 
       {hoveredQuiz === quiz.id && (
-        <div className="quiz-tooltip">{quiz.tooltip}</div>
+        <div className="knowledge-hint">{quiz.tooltip}</div>
       )}
     </div>
   );

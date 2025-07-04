@@ -58,44 +58,44 @@ const NumbersPage = () => {
   };
 
   return (
-    <div className={`numbers-page ${isMounted ? 'loaded' : ''}`}>
+    <div className={`numbers-page ${isMounted ? 'numbers-page--loaded' : ''}`}>
       <Navigation 
         isSidebarOpen={sidebarOpen} 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
       />
       <Sidebar isOpen={sidebarOpen} />
 
-      <main className={`numbers-content ${sidebarOpen ? 'with-sidebar' : ''}`}>
-        <div className="numbers-container">
-          <div className="back-link">
-            <Link to="/lessonsVirtual/1" className="back-button">
+      <main className={`numbers-page__content ${sidebarOpen ? 'numbers-page__content--with-sidebar' : ''}`}>
+        <div className="numbers-page__container">
+          <div className="numbers-page__back-link">
+            <Link to="/lessonsVirtual/1" className="numbers-page__back-button">
               ← Назад к уроку
             </Link>
           </div>
 
-          <div className="title-wrapper">
-            <h1 className="numbers-title">Номера</h1>
-            <div className="title-underline"></div>
+          <div className="numbers-page__header">
+            <h1 className="numbers-page__title">Номера</h1>
+            <div className="numbers-page__underline"></div>
           </div>
           
-          <div className="numbers-row">
+          <div className="numbers-page__grid">
             {categories.map((category, index) => (
               <div 
                 key={category.id}
-                className="number-category-card"
+                className="numbers-card"
                 style={{ animationDelay: `${index * 0.1}s` }}
                 onClick={() => handleCategoryClick(category.id)}
               >
-                <div className="circle-container">
+                <div className="numbers-card__icon-container">
                   <img 
                     src={category.icon} 
                     alt={category.title} 
-                    className="category-image"
+                    className="numbers-card__icon"
                     loading="lazy"
                   />
-                  <div className="lesson-count">{category.count}</div>
+                  <div className="numbers-card__count">{category.count}</div>
                 </div>
-                <h2 className="category-title">{category.title}</h2>
+                <h2 className="numbers-card__title">{category.title}</h2>
               </div>
             ))}
           </div>

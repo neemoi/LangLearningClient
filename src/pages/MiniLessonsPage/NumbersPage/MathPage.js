@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navigation from '../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../components/layout/Sidebar/Sidebar';
-import './css/NumbersMathPage.css';
+import './css/MathPage.css';
 
-const NumbersMathPage = () => {
+const MathPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showReference, setShowReference] = useState(false);
   const navigate = useNavigate();
@@ -381,4 +381,4 @@ const NumbersMathPage = () => {
   );
 };
 
-export default NumbersMathPage;
+export default MathPage;

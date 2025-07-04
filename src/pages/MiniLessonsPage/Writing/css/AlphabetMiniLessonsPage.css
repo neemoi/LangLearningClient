@@ -1,0 +1,189 @@
+:root {
+  --writing-alphabet-primary: #48a636;
+  --writing-alphabet-primary-light: #e6eaff;
+  --writing-alphabet-primary-dark: #4a4a4a;
+  --writing-alphabet-text: #000000;
+  --writing-alphabet-text-light: #718096;
+  --writing-alphabet-bg: #f7fafc;
+  --writing-alphabet-card-bg: #ffffff;
+  --writing-alphabet-border-radius: 12px;
+  --writing-alphabet-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --writing-alphabet-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --writing-alphabet-max-width: 1400px;
+}
+
+.writing-alphabet-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--writing-alphabet-bg);
+  color: var(--writing-alphabet-text);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.writing-alphabet-main {
+  flex-grow: 1;
+  padding: 90px 60px 60px;
+  width: 100%;
+  margin-left: 0;
+  transition: all 0.3s ease;
+}
+
+.writing-alphabet-main.with-sidebar {
+  margin-left: 280px;
+  width: calc(100% - 280px);
+}
+
+.writing-alphabet-container {
+  max-width: var(--writing-alphabet-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.writing-alphabet-back {
+  margin-bottom: 30px;
+  align-self: flex-start;
+  width: 100%;
+  animation: writing-alphabet-fadeInLeft 0.5s ease-out 0.1s both;
+}
+
+.writing-alphabet-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--writing-alphabet-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.1rem;
+  transition: all 0.2s;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.writing-alphabet-back-btn:hover {
+  color: var(--writing-alphabet-primary-dark);
+  background-color: var(--writing-alphabet-primary-light);
+}
+
+.writing-alphabet-header {
+  text-align: center;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.writing-alphabet-title {
+  font-size: 2.8rem;
+  color: var(--writing-alphabet-primary-dark);
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.writing-alphabet-subtitle {
+  font-size: 1.3rem;
+  color: var(--writing-alphabet-text-light);
+  margin: 0;
+}
+
+.writing-alphabet-image-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.writing-alphabet-image-container {
+  width: 100%;
+  padding: 30px;
+  background-color: var(--writing-alphabet-card-bg);
+  border-radius: var(--writing-alphabet-border-radius);
+  box-shadow: var(--writing-alphabet-shadow);
+  display: flex;
+  justify-content: center;
+}
+
+.writing-alphabet-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: calc(var(--writing-alphabet-border-radius) - 4px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes writing-alphabet-fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes writing-alphabet-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 1200px) {
+  .writing-alphabet-main {
+    padding: 90px 40px 40px;
+  }
+  
+  .writing-alphabet-title {
+    font-size: 2.4rem;
+  }
+  
+  .writing-alphabet-image-container {
+    padding: 25px;
+  }
+}
+
+@media (max-width: 992px) {
+  .writing-alphabet-main.with-sidebar {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .writing-alphabet-main {
+    padding: 80px 30px 30px;
+  }
+  
+  .writing-alphabet-title {
+    font-size: 2.2rem;
+  }
+  
+  .writing-alphabet-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .writing-alphabet-back-btn {
+    font-size: 1rem;
+    padding: 8px 14px;
+  }
+  
+  .writing-alphabet-image-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .writing-alphabet-main {
+    padding: 70px 20px 20px;
+  }
+  
+  .writing-alphabet-title {
+    font-size: 2rem;
+  }
+  
+  .writing-alphabet-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .writing-alphabet-image-container {
+    padding: 15px;
+  }
+}

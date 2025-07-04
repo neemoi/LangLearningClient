@@ -34,12 +34,23 @@ import PartsOfSpeechPage from './pages/PartsOfSpeech/PartsOfSpeechPage';
 import WordsByPartOfSpeechPage from './pages/PartsOfSpeech/WordsByPartOfSpeech/WordsByPartOfSpeechPage';
 import AlphabetPage from './pages/MiniLessonsPage/AlphabetPage/AlphabetPage';
 import NumbersPage from './pages/MiniLessonsPage/NumbersPage/NumbersPage';
-import NumbersMathPage from './pages/MiniLessonsPage/NumbersMathPage/NumbersMathPage';
-import AccountingPage from './pages/MiniLessonsPage/AccountingPage/AccountingPage';
+import NumbersMathPage from './pages/MiniLessonsPage/NumbersPage/MathPage';
+import AccountingPage from './pages/MiniLessonsPage/NumbersPage/AccountingPage';
 import OrdinalNumbersPage from './pages/MiniLessonsPage/OrdinalNumbersPage/OrdinalNumbersPage';
-import MoneyPage from './pages/MiniLessonsPage/MoneyPage/MoneyPage';
+import MoneyPage from './pages/MiniLessonsPage/NumbersPage/MoneyPage';
 import TimePage from './pages/MiniLessonsPage/TimePage/TimePage';
-import DatesPage from './pages/MiniLessonsPage/DatesPage/DatesPage';
+import DatesPage from './pages/MiniLessonsPage/NumbersPage/DatesPage';
+import WritingPage from './pages/MiniLessonsPage/Writing/WritingPage';
+import LettersPage from './pages/MiniLessonsPage/Writing/LettersPage';
+import AlphabetMiniLessonsPage from './pages/MiniLessonsPage/Writing/AlphabetMiniLessonsPage';
+import WordsMiniLessonsPage from './pages/MiniLessonsPage/Writing/WordsMiniLessonsPage';
+import SentencesMiniLessonPage from './pages/MiniLessonsPage/Writing/SentencesMiniLessonPage';
+import PronunciationPage from './pages/MiniLessonsPage/PronunciationPage/PronunciationPage';
+import WordsByPronunciationPage from './pages/MiniLessonsPage/PronunciationPage/WordsByPronunciationPage';
+import BasicQuestionsPage from './pages/MiniLessonsPage/BasicQuestions/BasicQuestionsPage';
+import WordsByBasicQuestionsPage from './pages/MiniLessonsPage/BasicQuestions/WordsByBasicQuestionsPage';
+import EnglishNamesPage from './pages/MiniLessonsPage/EnglishNamesPage/EnglishNamesPage';
+import EnglishNamesMaleFemalePage from './pages/MiniLessonsPage/EnglishNamesPage/EnglishNamesMaleFemalePage';
 
 function App() {
   return (
@@ -74,7 +85,18 @@ function App() {
         <Route path="/numbers/ordinal" element={<OrdinalNumbersPage />} />
         <Route path="/numbers/money" element={<MoneyPage />} />
         <Route path="/numbers/time" element={<TimePage />} />
-        <Route path="/numbers/dates" element={<TimePage />} />
+        <Route path="/numbers/dates" element={<DatesPage />} />
+        <Route path="/mini-lessons/writing" element={<WritingPage />} />
+        <Route path="/mini-lessons/pronunciation" element={<PronunciationPage />} />
+        <Route path="/mini-lessons/basic-questions" element={<BasicQuestionsPage />} />
+        <Route path="/mini-lessons/basic-questions/:id" element={<WordsByBasicQuestionsPage />} /> 
+        <Route path="/mini-lessons/english-names" element={<EnglishNamesPage />} />
+        <Route path="/mini-lessons/english-names/:gender" element={<EnglishNamesMaleFemalePage />} />
+        <Route path="/pronunciation/:id" element={<WordsByPronunciationPage />} />
+        <Route path="/writing/letters" element={<LettersPage />} />
+        <Route path="/writing/alphabet" element={<AlphabetMiniLessonsPage />} />
+        <Route path="/writing/words" element={<WordsMiniLessonsPage />} />
+        <Route path="/writing/sentences" element={<SentencesMiniLessonPage />} />
         <Route path="/nouns" element={<NounsPage />} />
         <Route path="/alphabet/:letter" element={<WordsByLetterPage />} />
         <Route path="/functions" element={<PartsOfSpeechPage />} />

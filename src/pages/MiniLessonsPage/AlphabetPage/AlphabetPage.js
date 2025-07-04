@@ -57,99 +57,99 @@ const AlphabetPage = () => {
   }
 
   return (
-    <div className="alphabet-page">
+    <div className="abc-page">
       <Navigation 
         isSidebarOpen={sidebarOpen} 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
       />
       <Sidebar isOpen={sidebarOpen} />
 
-      <main className={`alphabet-content ${sidebarOpen ? 'with-sidebar' : 'no-sidebar'}`}>
-        <div className="alphabet-container">
-          <div className="back-link">
-            <Link to="/lessonsVirtual/1" className="back-button">
+      <main className={`abc-main ${sidebarOpen ? 'with-sidebar' : 'without-sidebar'}`}>
+        <div className="abc-container">
+          <div className="abc-back">
+            <Link to="/lessonsVirtual/1" className="abc-back-btn">
               ← Вернуться к уроку
             </Link>
           </div>
 
-          <div className="header-section">
-            <h1 className="alphabet-title">Английский алфавит</h1>
-            <p className="alphabet-subtitle">Изучайте буквы с правильным произношением</p>
+          <div className="abc-header">
+            <h1 className="abc-title">Английский алфавит</h1>
+            <p className="abc-subtitle">Изучайте буквы с правильным произношением</p>
           </div>
 
-          <div className="alphabet-actions">
+          <div className="abc-actions">
             <button 
               onClick={speakAlphabet}
-              className="action-button play-all"
+              className="abc-action-btn abc-play-all"
             >
               Прослушать весь алфавит
             </button>
             <button 
               onClick={() => setShowInfo(!showInfo)}
-              className="action-button info"
+              className="abc-action-btn abc-info-btn"
             >
               {showInfo ? 'Скрыть подсказки' : 'Показать подсказки'}
             </button>
           </div>
 
-          <div className="alphabet-grid">
+          <div className="abc-grid">
             {uppercaseLetters.map((letter) => (
               <div 
                 key={letter}
-                className={`letter-card ${activeLetter === letter ? 'active' : ''} ${
+                className={`abc-letter-card ${activeLetter === letter ? 'active' : ''} ${
                   vowels.includes(letter) ? 'vowel' : 'consonant'
                 }`}
                 onClick={() => speakLetter(letter)}
               >
-                <div className="letter-content">
-                  <div className="uppercase">{letter}</div>
-                  <div className="lowercase">{letter.toLowerCase()}</div>
+                <div className="abc-letter-content">
+                  <div className="abc-uppercase">{letter}</div>
+                  <div className="abc-lowercase">{letter.toLowerCase()}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {showInfo && (
-            <div className="alphabet-info">
-              <div className="info-section intro">
+            <div className="abc-info">
+              <div className="abc-info-section abc-intro">
                 <h2>Alphabet / Алфавит</h2>
                 <p>The English alphabet consists of twenty six (26) letters.<br/>
                 Английский алфавит состоит из двадцати шести (26) букв.</p>
               </div>
 
-              <div className="info-section">
+              <div className="abc-info-section">
                 <h3>Uppercase letters / Прописные буквы</h3>
                 <p>There are two forms of each letter: Uppercase and Lowercase.<br/>
                 Есть две формы каждой буквы: прописные (верхний регистр) и строчные (нижний регистр).</p>
-                <div className="letters-display uppercase">
+                <div className="abc-letters-display abc-uppercase-display">
                   {uppercaseLetters.join(' ')}
                 </div>
               </div>
 
-              <div className="info-section">
+              <div className="abc-info-section">
                 <h3>Lowercase letters / Строчные буквы</h3>
-                <div className="letters-display lowercase">
+                <div className="abc-letters-display abc-lowercase-display">
                   {lowercaseLetters.join(' ')}
                 </div>
               </div>
 
-              <div className="info-section">
+              <div className="abc-info-section">
                 <h3>Vowels / Гласные</h3>
                 <p>The alphabet is also separated into consonants and vowels. Six (6) vowels and twenty (20) consonants. Each word in the English language has at least one vowel.<br/>
                 Алфавит также разделен на согласные и гласные. Шесть (6) гласных и двадцать (20) согласных. Каждое слово в английском языке имеет по крайней мере одну гласную букву.</p>
-                <div className="letters-display vowel">
+                <div className="abc-letters-display abc-vowel-display">
                   {vowels.join(' ')}<br/>
                   ({vowels.join(' ').toLowerCase()})
                 </div>
               </div>
 
-              <div className="info-section">
+              <div className="abc-info-section">
                 <h3>Consonants / Согласные</h3>
-                <div className="letters-display consonant">
+                <div className="abc-letters-display abc-consonant-display">
                   {consonants.join(' ')}<br/>
                   ({consonants.join(' ').toLowerCase()})
                 </div>
-                <div className="note">
+                <div className="abc-note">
                   <p>*The letter "Y" is often also used as a vowel although sometimes it is used as a consonant.<br/>
                   * Буква "Y" чаще используется в качестве гласной, а иногда - в качестве согласной буквы.</p>
                 </div>

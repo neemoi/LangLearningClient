@@ -73,44 +73,54 @@ const PartsOfSpeechPage = () => {
 
       <main className={`parts-of-speech-content ${sidebarOpen ? 'with-sidebar' : 'no-sidebar'}`}>
         <div className="parts-of-speech-container">
-          <div className={`page-header ${animate ? 'animate' : ''}`}>
-            <button 
-              onClick={handleGoBack} 
-              className="back-button"
-            >
-              <span className="back-arrow">←</span> Назад к уроку
-            </button>
-            <h1 className="page-title">Части речи</h1>
-            <div className="header-spacer"></div>
+          <div className="parts-of-speech-header">
+            <div className="header-content">
+              <button 
+                onClick={handleGoBack} 
+                className="back-button"
+              >
+                <span className="back-arrow">←</span> Назад к уроку
+              </button>
+              <div className="title-container">
+                <h1 className="page-title">Части речи</h1>
+                <div className="title-underline"></div>
+              </div>
+            </div>
           </div>
           
           <div className="parts-of-speech-grid">
-            {partsOfSpeech.map((part, index) => (
-              <div 
-                key={part.id}
-                className={`part-of-speech-wrapper ${animate ? 'animate' : ''}`}
-                style={{ transitionDelay: `${index * 0.1}s` }}
-              >
-                <Link 
-                  to={`/functions/${part.id}`} 
-                  className="part-of-speech-card"
+            {partsOfSpeech.length > 0 ? (
+              partsOfSpeech.map((part, index) => (
+                <div 
+                  key={part.id}
+                  className={`part-of-speech-wrapper ${animate ? 'animate' : ''}`}
+                  style={{ transitionDelay: `${index * 0.1}s` }}
                 >
-                  <div className="card-icon">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M12 8V12L15 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                  <div className="part-of-speech-name">{part.name}</div>
-                  <div className="view-words-link">
-                    Смотреть слова
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </Link>
+                  <Link 
+                    to={`/functions/${part.id}`} 
+                    className="part-of-speech-card"
+                  >
+                    <div className="card-icon">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 8V12L15 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div className="part-of-speech-name">{part.name}</div>
+                    <div className="view-words-link">
+                      Смотреть слова
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <div className="no-words-message">
+                Нет доступных частей речи. Пожалуйста, попробуйте позже.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </main>

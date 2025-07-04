@@ -1,17 +1,16 @@
 :root {
-  --wb-sidebar-width: 280px;
-  --wb-main-color: #7bb569;
-  --wb-main-color-light: #000000;
-  --wb-accent-color: #000000;
-  --wb-accent-color-light: #FF9E8A;
-  --wb-light-bg: #F8F8F8;
-  --wb-card-bg: #FFFFFF;
-  --wb-text-color: #333333;
-  --wb-text-light: #777777;
-  --wb-border-radius: 16px;
-  --wb-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --wb-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
-  --wb-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --sidebar-width: 280px;
+  --primary-color: #7bb569;
+  --primary-light: rgba(123, 181, 105, 0.1);
+  --accent-color: #000000;
+  --light-bg: #F8F8F8;
+  --card-bg: #FFFFFF;
+  --text-color: #333333;
+  --text-light: #777777;
+  --border-radius: 16px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 @keyframes fadeIn {
@@ -29,26 +28,21 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes underlinePulse {
-  0%, 100% { width: 60px; }
-  50% { width: 80px; }
-}
-
 .parts-of-speech-page {
   display: flex;
   min-height: 100vh;
-  background-color: var(--wb-light-bg);
+  background-color: var(--light-bg);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .parts-of-speech-content {
   flex-grow: 1;
-  padding: 90px 40px 40px;
+  padding: 120px 40px 40px;
   transition: margin-left 0.3s ease;
 }
 
 .parts-of-speech-content.with-sidebar {
-  margin-left: var(--wb-sidebar-width);
+  margin-left: var(--sidebar-width);
 }
 
 .parts-of-speech-content.no-sidebar {
@@ -60,64 +54,63 @@
   margin: 0 auto;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.parts-of-speech-header {
   margin-bottom: 3rem;
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.page-header.animate {
-  opacity: 1;
-  transform: translateY(0);
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+.title-container {
+  text-align: center;
+  margin: 0 auto;
 }
 
 .back-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(93, 141, 127, 0.1);
-  border: none;
-  color: var(--wb-main-color);
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--wb-border-radius);
-  transition: var(--wb-transition);
+  all: unset !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--primary-color) !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  position: absolute !important;
+  left: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  border: none !important;
 }
 
 .back-button:hover {
-  background: rgba(0, 0, 0, 0.2);
-  transform: translateX(-3px);
-}
-
-.header-spacer {
-  width: 120px;
+  color: var(--accent-color) !important;
+  text-decoration: underline !important;
 }
 
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--wb-main-color);
-  margin: 0;
+  color: var(--primary-color);
+  margin: 0 0 10px 0;
   position: relative;
+  display: inline-block;
 }
 
-.page-title::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
+.title-underline {
+  width: 80px;
   height: 4px;
-  background-color: var(--wb-accent-color);
+  background-color: var(--accent-color);
+  margin: 0 auto;
   border-radius: 2px;
-  animation: underlinePulse 2s infinite ease-in-out;
 }
 
 .parts-of-speech-grid {
@@ -138,11 +131,11 @@
 }
 
 .part-of-speech-card {
-  background: var(--wb-card-bg);
-  border-radius: var(--wb-border-radius);
-  box-shadow: var(--wb-shadow);
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
   padding: 2rem;
-  transition: var(--wb-transition);
+  transition: var(--transition);
   text-decoration: none;
   color: inherit;
   display: flex;
@@ -154,7 +147,7 @@
 
 .part-of-speech-card:hover {
   transform: translateY(-8px);
-  box-shadow: var(--wb-shadow-hover);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-icon {
@@ -163,7 +156,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(93, 141, 127, 0.1);
+  background: var(--primary-light);
   border-radius: 50%;
   margin-bottom: 1.5rem;
   transition: transform 0.3s ease;
@@ -176,7 +169,7 @@
 .part-of-speech-name {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--wb-main-color);
+  color: var(--primary-color);
   margin-bottom: 1rem;
 }
 
@@ -184,10 +177,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--wb-accent-color);
+  color: var(--accent-color);
   font-weight: 500;
   margin-top: 1rem;
-  transition: var(--wb-transition);
+  transition: var(--transition);
 }
 
 .part-of-speech-card:hover .view-words-link {
@@ -200,7 +193,7 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: var(--wb-main-color);
+  color: var(--primary-color);
   animation: fadeIn 0.5s ease;
 }
 
@@ -209,7 +202,7 @@
   height: 3rem;
   margin-bottom: 1.5rem;
   border: 4px solid rgba(93, 141, 127, 0.2);
-  border-top-color: var(--wb-main-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -220,7 +213,7 @@
 
 @media (max-width: 1200px) {
   .parts-of-speech-content {
-    padding: 80px 30px 30px;
+    padding: 100px 30px 30px;
   }
 }
 
@@ -237,7 +230,7 @@
 
 @media (max-width: 768px) {
   .parts-of-speech-content {
-    padding: 80px 25px 25px;
+    padding: 90px 25px 25px;
   }
   
   .parts-of-speech-grid {
@@ -248,42 +241,29 @@
     padding: 1.75rem;
   }
   
-  .page-header {
+  .parts-of-speech-header {
     margin-bottom: 2rem;
   }
 }
 
 @media (max-width: 576px) {
   .parts-of-speech-content {
-    padding: 70px 20px 20px;
+    padding: 80px 20px 20px;
   }
   
-  .parts-of-speech-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .page-header {
+  .header-content {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 1.5rem;
-    margin-bottom: 1.5rem;
   }
   
   .back-button {
-    padding: 0.5rem 1rem;
-  }
-  
-  .header-spacer {
-    display: none;
+    position: static;
+    margin-bottom: 1rem;
   }
   
   .page-title {
     font-size: 2rem;
-    align-self: center;
-  }
-  
-  .page-title::after {
-    bottom: -8px;
   }
   
   .card-icon {

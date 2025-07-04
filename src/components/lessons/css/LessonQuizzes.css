@@ -1,10 +1,10 @@
-.quiz-wrapper {
+.knowledge-container {
   width: 100%;
   padding: 20px 0;
   background: #f8fafc;
 }
 
-.quiz-columns {
+.knowledge-sections {
   display: flex;
   justify-content: center;
   gap: 30px;
@@ -13,19 +13,19 @@
   flex-wrap: wrap;
 }
 
-.quiz-column {
+.knowledge-section {
   flex: 1;
   min-width: 300px;
 }
 
-.quiz-block {
+.knowledge-card {
   background: #ffffff;
   padding: 25px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
 }
 
-.quiz-title {
+.knowledge-heading {
   font-size: 1.4rem;
   font-weight: 600;
   color: #2d3748;
@@ -35,7 +35,7 @@
   padding-bottom: 8px;
 }
 
-.quiz-title::after {
+.knowledge-heading::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -47,14 +47,14 @@
   border-radius: 3px;
 }
 
-.quiz-list {
+.knowledge-items {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 20px;
 }
 
-.quiz-item {
+.knowledge-unit {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -63,7 +63,7 @@
   position: relative;
 }
 
-.quiz-icon-wrapper.large {
+.knowledge-icon-holder.big {
   width: 100px;
   height: 100px;
   border-radius: 50%;
@@ -75,18 +75,18 @@
   transition: transform 0.3s ease;
 }
 
-.quiz-icon-wrapper.large:hover {
+.knowledge-icon-holder.big:hover {
   transform: scale(1.08);
 }
 
-.quiz-icon {
+.knowledge-icon {
   width: 100%;
   height: 100%;
   object-fit: contain;
   padding: 8px;
 }
 
-.quiz-progress-bar-bg.large {
+.knowledge-meter-bg.big {
   width: 100px;
   height: 8px;
   background: #e2e8f0;
@@ -95,30 +95,30 @@
   overflow: hidden;
 }
 
-.quiz-progress-bar-fill {
+.knowledge-meter-fill {
   height: 100%;
   transition: width 0.3s ease;
 }
 
-.quiz-progress-red {
+.knowledge-meter-red {
   background: #f56565;
 }
 
-.quiz-progress-yellow {
+.knowledge-meter-yellow {
   background: #ecc94b;
 }
 
-.quiz-progress-green {
+.knowledge-meter-green {
   background: #48bb78;
 }
 
-.quiz-progress-text {
+.knowledge-score {
   font-size: 13px;
   color: #2d3748;
   margin-top: 6px;
 }
 
-.quiz-tooltip {
+.knowledge-hint {
   position: absolute;
   bottom: -35px;
   left: 50%;
@@ -133,7 +133,7 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
-.quiz-tooltip::before {
+.knowledge-hint::before {
   content: '';
   position: absolute;
   top: -6px;
@@ -144,8 +144,8 @@
   border-color: transparent transparent #2d3748 transparent;
 }
 
-.quiz-loading,
-.quiz-error {
+.knowledge-loader,
+.knowledge-error {
   text-align: center;
   color: #4a5568;
   padding: 30px;

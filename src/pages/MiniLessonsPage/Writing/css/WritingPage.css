@@ -1,4 +1,4 @@
-.numbers-page {
+.mini-lessons-writing-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -8,12 +8,12 @@
   transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
 
-.numbers-page--loaded {
+.mini-lessons-writing-page.loaded {
   opacity: 1;
   transform: translateY(0);
 }
 
-.numbers-page__content {
+.mini-lessons-writing-content {
   flex-grow: 1;
   padding: 80px 20px 40px;
   transition: margin-left 0.3s ease;
@@ -21,11 +21,11 @@
   justify-content: center;
 }
 
-.numbers-page__content--with-sidebar {
+.mini-lessons-writing-content.with-sidebar {
   margin-left: 280px;
 }
 
-.numbers-page__container {
+.mini-lessons-writing-container {
   width: 100%;
   max-width: 1200px;
   display: flex;
@@ -33,7 +33,7 @@
   align-items: center;
 }
 
-.numbers-page__back-link {
+.mini-lessons-back-link {
   margin-bottom: 25px;
   align-self: flex-start;
   width: 100%;
@@ -41,7 +41,7 @@
   animation: fadeInUp 0.5s ease-out 0.2s both;
 }
 
-.numbers-page__back-button {
+.mini-lessons-back-button {
   margin-top: 30px;
   display: inline-flex;
   align-items: center;
@@ -54,12 +54,12 @@
   border-radius: 4px;
 }
 
-.numbers-page__back-button:hover {
+.mini-lessons-back-button:hover {
   color: #5d5d5d;
   background-color: rgba(85, 85, 85, 0.1);
 }
 
-.numbers-page__header {
+.mini-lessons-title-wrapper {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -68,7 +68,7 @@
   animation: fadeInUp 0.5s ease-out 0.3s both;
 }
 
-.numbers-page__title {
+.mini-lessons-writing-title {
   text-align: center;
   color: #2c3e50;
   font-size: 2.2rem;
@@ -77,42 +77,44 @@
   animation: fadeIn 0.6s ease-out 0.4s both;
 }
 
-.numbers-page__underline {
+.mini-lessons-title-underline {
   width: 80px;
   height: 4px;
-  background: black;
+  background: #2c3e50;
   border-radius: 2px;
   animation: scaleIn 0.5s ease-out 0.5s both;
 }
 
-.numbers-page__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+.mini-lessons-writing-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 25px;
-  width: 100%;
   padding: 20px;
+  max-width: 100%;
 }
 
-.numbers-card {
+.mini-lessons-writing-category-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  min-width: 120px; 
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.5s ease-out forwards;
 }
 
-.numbers-card:hover {
+.mini-lessons-writing-category-card:hover {
   transform: translateY(-5px);
 }
 
-.numbers-card__icon-container {
+.mini-lessons-circle-container {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   overflow: hidden;
   margin-bottom: 15px;
@@ -120,45 +122,44 @@
   transition: transform 0.3s ease;
 }
 
-.numbers-card:hover .numbers-card__icon-container {
+.mini-lessons-writing-category-card:hover .mini-lessons-circle-container {
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-.numbers-card__icon {
+.mini-lessons-category-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.numbers-card:hover .numbers-card__icon {
+.mini-lessons-writing-category-card:hover .mini-lessons-category-image {
   transform: scale(1.1);
 }
 
-.numbers-card__count {
+.mini-lessons-count {
   position: absolute;
   top: 8px;
-  right: 8px;
+  right: 8px; 
   background-color: rgba(255, 255, 255, 0.95);
-  width: 32px;
-  height: 32px;
+  width: 28px; 
+  height: 28px; 
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   color: #2c3e50;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-.numbers-card__title {
+.mini-lessons-category-title {
   color: #2c3e50;
   margin-top: 10px;
   font-size: 1.1rem;
   font-weight: 600;
-  white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,102 +193,105 @@
 }
 
 @media (max-width: 992px) {
-  .numbers-page__content {
+  .mini-lessons-writing-content {
     padding: 70px 15px 30px;
   }
   
-  .numbers-page__title {
+  .mini-lessons-writing-title {
     font-size: 2rem;
   }
   
-  .numbers-page__underline {
+  .mini-lessons-title-underline {
     width: 70px;
   }
   
-  .numbers-card__icon-container {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .numbers-page__grid {
-    gap: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .numbers-page__content--with-sidebar {
-    margin-left: 0;
-  }
-  
-  .numbers-page__content {
-    padding: 60px 15px 25px;
-  }
-  
-  .numbers-page__title {
-    font-size: 1.8rem;
-  }
-  
-  .numbers-page__underline {
-    width: 60px;
-    height: 3px;
-  }
-  
-  .numbers-card__icon-container {
+  .mini-lessons-circle-container {
     width: 90px;
     height: 90px;
   }
   
-  .numbers-page__grid {
+  .mini-lessons-writing-row {
+    gap: 20px;
+  }
+
+  .mini-lessons-count {
+    width: 26px;
+    height: 26px; 
+  }
+}
+
+@media (max-width: 768px) {
+  .mini-lessons-writing-content.with-sidebar {
+    margin-left: 0;
+  }
+  
+  .mini-lessons-writing-content {
+    padding: 60px 15px 25px;
+  }
+  
+  .mini-lessons-writing-title {
+    font-size: 1.8rem;
+  }
+  
+  .mini-lessons-title-underline {
+    width: 60px;
+    height: 3px;
+  }
+  
+  .mini-lessons-circle-container {
+    width: 80px; 
+    height: 80px; 
+  }
+  
+  .mini-lessons-writing-row {
     gap: 15px;
     padding: 15px;
   }
   
-  .numbers-card__count {
-    width: 28px;
-    height: 28px;
-    font-size: 0.9rem;
+  .mini-lessons-count {
+    width: 24px;
+    height: 24px; 
   }
   
-  .numbers-card__title {
+  .mini-lessons-category-title {
     font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .numbers-page__content {
+  .mini-lessons-writing-content {
     padding: 50px 10px 20px;
   }
   
-  .numbers-page__title {
+  .mini-lessons-writing-title {
     font-size: 1.6rem;
   }
   
-  .numbers-page__underline {
+  .mini-lessons-title-underline {
     width: 50px;
   }
   
-  .numbers-page__back-link {
+  .mini-lessons-back-link {
     margin-bottom: 20px;
   }
   
-  .numbers-card__icon-container {
-    width: 80px;
-    height: 80px;
+  .mini-lessons-circle-container {
+    width: 70px; 
+    height: 70px; 
   }
   
-  .numbers-page__grid {
-    grid-template-columns: repeat(2, 1fr);
+  .mini-lessons-writing-row {
     gap: 12px;
     padding: 12px 10px;
   }
   
-  .numbers-card__count {
-    width: 26px;
-    height: 26px;
-    font-size: 0.85rem;
+  .mini-lessons-count {
+    width: 22px; 
+    height: 22px; 
+    font-size: 0.8rem; 
   }
   
-  .numbers-card__title {
-    font-size: 0.9rem;
+  .mini-lessons-category-title {
+    font-size: 0.9rem; 
   }
 }
