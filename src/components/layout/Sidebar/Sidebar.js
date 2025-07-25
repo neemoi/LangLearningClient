@@ -24,7 +24,7 @@ const Sidebar = ({ isOpen }) => {
         { to: '/mini-lessons/english-names', label: 'Англоязычные имена' }
       ]
     },
-    { to: '/kids', label: 'gfriend Kids', icon: <Book className="icon" /> },
+    { to: '/kids-lessons/1', label: 'gfriend Kids', icon: <Book className="icon" /> },
   ];
 
   const toggleMiniLessons = () => {

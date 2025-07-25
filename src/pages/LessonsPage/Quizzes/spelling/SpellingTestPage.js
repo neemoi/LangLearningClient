@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
@@ -268,34 +268,6 @@ const SpellingTestPage = () => {
     }
   }, [testQuestions, testType]);
 
-  const sendProgress = async (isCorrect) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      
-      const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      const payload = {
-        userId: user.id,
-        lessonId: parseInt(lessonId),
-        wordId: currentQuestion.wordId,
-        questionType: getQuestionTypeId(testType),
-        isCorrect,
-        lessonWordId: currentQuestion.lessonWordId || 0
-      };
-
-      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-    } catch (error) {
-      console.error('Error sending progress:', error);
-    }
-  };
-
   const getQuestionTypeId = (type) => {
     switch(type) {
       case TEST_TYPES.IMAGE: return 1;
@@ -306,6 +278,71 @@ const SpellingTestPage = () => {
       case TEST_TYPES.PRONUNCIATION: return 6;
       case TEST_TYPES.ADVANCED: return 7;
       default: return 0;
+    }
+  };
+
+  const sendProgress = async (isCorrect) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+      if (!currentQuestion) return;
+
+      const progressResponse = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress/user/${user.id}/${lessonId}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
+      
+      const existingProgress = await progressResponse.json();
+      
+      const questionTypeId = getQuestionTypeId(testType);
+      const existingRecord = existingProgress.find(
+        record => 
+          record.wordId === currentQuestion.wordId && 
+          record.questionType === 'Spelling'
+      );
+
+      const payload = {
+        userId: user.id,
+        lessonId: parseInt(lessonId),
+        wordId: currentQuestion.wordId,
+        questionType: questionTypeId,
+        isCorrect,
+        lessonWordId: currentQuestion.lessonWordId || 0
+      };
+
+      if (existingRecord) {
+        await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            id: existingRecord.id,
+            userId: user.id,
+            lessonId: parseInt(lessonId),
+            wordId: currentQuestion.wordId,
+            questionType: 'Spelling',
+            isCorrect,
+            lessonWordId: currentQuestion.lessonWordId || 0
+          })
+        });
+      } else {
+        await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload) 
+        });
+      }
+    } catch (error) {
+      console.error('Error sending progress:', error);
     }
   };
 

@@ -36,12 +36,12 @@ const EnglishNamesMaleFemalePage = () => {
   const stopButtonTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!localStorage.getItem('currentUser')) {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
       navigate('/');
+      return;
     }
-  }, [navigate]);
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const endpoint = gender === 'male' ? 'MaleName' : 'FemaleName';
@@ -83,7 +83,11 @@ const EnglishNamesMaleFemalePage = () => {
         synthRef.current.onvoiceschanged = null;
       }
     };
-  }, [gender]);
+  }, [gender, navigate]);
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
 
   const initSpeech = () => {
     if (!window.speechSynthesis) {
@@ -236,8 +240,6 @@ const EnglishNamesMaleFemalePage = () => {
     setData(prev => ({ ...prev, currentName: name }));
     await speak(name.name);
   };
-
-  if (!localStorage.getItem('currentUser')) return null;
 
   if (data.loading) {
     return (

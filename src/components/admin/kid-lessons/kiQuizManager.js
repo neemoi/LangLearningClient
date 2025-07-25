@@ -7,7 +7,7 @@ import {
 import { 
   FaPlus, FaEdit, FaTrash, FaSearch, FaImage, 
   FaHeadphones, FaSpellCheck, FaInfoCircle, 
-  FaCheck, FaTimes, FaListAlt, FaLink, FaQuestionCircle 
+  FaCheck, FaTimes, FaListAlt, FaLink, FaQuestionCircle
 } from 'react-icons/fa';
 
 const QUIZ_TYPES = [
@@ -17,12 +17,11 @@ const QUIZ_TYPES = [
     label: 'Выбор по изображению',
     icon: <FaImage className="me-2" />,
     description: 'Ученик выбирает правильный ответ по изображению',
-    fields: {
-      questionText: true,
-      imageUrl: true,
-      answers: true,
-      correctAnswer: true
-    }
+    requiresText: false,
+    requiresImage: true,
+    requiresAudio: false,
+    requiresAnswers: false,
+    requiresCorrectAnswer: true
   },
   {
     id: 2,
@@ -30,12 +29,11 @@ const QUIZ_TYPES = [
     label: 'Выбор по аудио',
     icon: <FaHeadphones className="me-2" />,
     description: 'Ученик выбирает ответ после прослушивания аудио',
-    fields: {
-      questionText: true,
-      audioUrl: true,
-      answers: true,
-      correctAnswer: true
-    }
+    requiresText: false,
+    requiresImage: false,
+    requiresAudio: true,
+    requiresAnswers: false,
+    requiresCorrectAnswer: true
   },
   {
     id: 3,
@@ -43,13 +41,11 @@ const QUIZ_TYPES = [
     label: 'Комбинированный выбор',
     icon: <><FaImage className="me-2" /><FaHeadphones /></>,
     description: 'Комбинация изображения и аудио',
-    fields: {
-      questionText: true,
-      imageUrl: true,
-      audioUrl: true,
-      answers: true,
-      correctAnswer: true
-    }
+    requiresText: false,
+    requiresImage: true,
+    requiresAudio: true,
+    requiresAnswers: false,
+    requiresCorrectAnswer: true
   },
   {
     id: 4,
@@ -57,10 +53,11 @@ const QUIZ_TYPES = [
     label: 'Правописание',
     icon: <FaSpellCheck className="me-2" />,
     description: 'Проверка правильного написания',
-    fields: {
-      questionText: true,
-      correctAnswer: true
-    }
+    requiresText: false,
+    requiresImage: true,
+    requiresAudio: false,
+    requiresAnswers: false,
+    requiresCorrectAnswer: true
   }
 ];
 
@@ -75,13 +72,10 @@ const KidQuizManager = ({ lessonId, token }) => {
     lessonId: typeof lessonId === 'string' ? parseInt(lessonId) : lessonId,
     quizTypeId: 1,
     questionText: '',
-    audioUrl: '',
     imageUrl: '',
+    audioUrl: '',
     correctAnswer: '',
-    answers: [
-      { answerText: '', isCorrect: false },
-      { answerText: '', isCorrect: false }
-    ]
+    answers: []
   });
   const [formErrors, setFormErrors] = useState({});
   const [activeTab, setActiveTab] = useState('info');
@@ -100,73 +94,6 @@ const KidQuizManager = ({ lessonId, token }) => {
     fetchQuizzes();
   }, [lessonId]);
 
-  const createAnswer = async (answerData) => {
-    try {
-      const response = await fetch('https://localhost:7119/api/KidQuizAnswer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(answerData)
-      });
-      if (!response.ok) throw new Error('Ошибка создания ответа');
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при создании ответа:', error);
-      throw error;
-    }
-  };
-
-  const updateAnswer = async (answerData) => {
-    try {
-      const response = await fetch('https://localhost:7119/api/KidQuizAnswer', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(answerData)
-      });
-      if (!response.ok) throw new Error('Ошибка обновления ответа');
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при обновлении ответа:', error);
-      throw error;
-    }
-  };
-
-  const deleteAnswer = async (id) => {
-    try {
-      const response = await fetch(`https://localhost:7119/api/KidQuizAnswer/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Ошибка удаления ответа');
-      return true;
-    } catch (error) {
-      console.error('Ошибка при удалении ответа:', error);
-      throw error;
-    }
-  };
-
-  const fetchAnswersByQuestionId = async (questionId) => {
-    try {
-      const response = await fetch(`https://localhost:7119/api/KidQuizAnswer/question/${questionId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Ошибка загрузки ответов');
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при загрузке ответов:', error);
-      return [];
-    }
-  };
-
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
@@ -182,21 +109,7 @@ const KidQuizManager = ({ lessonId, token }) => {
         throw new Error('Не удалось загрузить тесты');
       }
       
-      let data = await response.json();
-      
-      data = await Promise.all(data.map(async quiz => {
-        if (QUIZ_TYPES.find(t => t.id === quiz.quizTypeId)?.fields.answers) {
-          try {
-            const answers = await fetchAnswersByQuestionId(quiz.id);
-            return { ...quiz, answers };
-          } catch (err) {
-            console.error('Ошибка загрузки ответов:', err);
-            return { ...quiz, answers: [] };
-          }
-        }
-        return quiz;
-      }));
-      
+      const data = await response.json();
       setQuizzes(data);
     } catch (err) {
       setError(err.message);
@@ -213,30 +126,16 @@ const KidQuizManager = ({ lessonId, token }) => {
     const currentType = getCurrentQuizType();
     const errors = {};
     
-    if (currentType.fields.questionText && !formData.questionText.trim()) {
-      errors.questionText = 'Текст вопроса обязателен';
-    }
-    
-    if (currentType.fields.correctAnswer && !formData.correctAnswer.trim()) {
-      errors.correctAnswer = 'Правильный ответ обязателен';
-    }
-    
-    if (currentType.fields.imageUrl && !formData.imageUrl.trim()) {
+    if (currentType.requiresImage && !formData.imageUrl.trim()) {
       errors.imageUrl = 'URL изображения обязателен';
     }
     
-    if (currentType.fields.audioUrl && !formData.audioUrl.trim()) {
+    if (currentType.requiresAudio && !formData.audioUrl.trim()) {
       errors.audioUrl = 'URL аудио обязателен';
     }
     
-    if (currentType.fields.answers) {
-      if (formData.answers.length < 2) {
-        errors.answers = 'Необходимо минимум 2 варианта ответа';
-      } else if (formData.answers.some(a => !a.answerText.trim())) {
-        errors.answers = 'Все варианты ответов должны быть заполнены';
-      } else if (!formData.answers.some(a => a.isCorrect)) {
-        errors.answers = 'Необходимо указать хотя бы один правильный вариант ответа';
-      }
+    if (currentType.requiresCorrectAnswer && !formData.correctAnswer.trim()) {
+      errors.correctAnswer = 'Правильный ответ обязателен';
     }
     
     setFormErrors(errors);
@@ -268,33 +167,6 @@ const KidQuizManager = ({ lessonId, token }) => {
         throw new Error(isEditing ? 'Ошибка обновления' : 'Ошибка создания');
       }
       
-      const questionData = await response.json();
-      const questionId = questionData.id;
-      
-      if (getCurrentQuizType().fields.answers) {
-        const existingAnswers = await fetchAnswersByQuestionId(questionId);
-        
-        for (const existingAnswer of existingAnswers) {
-          if (!formData.answers.some(a => a.id === existingAnswer.id)) {
-            await deleteAnswer(existingAnswer.id);
-          }
-        }
-        
-        for (const answer of formData.answers) {
-          const answerData = {
-            questionId,
-            answerText: answer.answerText,
-            isCorrect: answer.isCorrect
-          };
-          
-          if (answer.id) {
-            await updateAnswer({ ...answerData, id: answer.id });
-          } else {
-            await createAnswer(answerData);
-          }
-        }
-      }
-      
       await fetchQuizzes();
       setShowModal(false);
     } catch (err) {
@@ -306,9 +178,6 @@ const KidQuizManager = ({ lessonId, token }) => {
     if (!window.confirm('Вы уверены, что хотите удалить этот тест?')) return;
     
     try {
-      const answers = await fetchAnswersByQuestionId(id);
-      await Promise.all(answers.map(answer => deleteAnswer(answer.id)));
-      
       const response = await fetch(`https://localhost:7119/api/KidQuizQuestions/${id}`, {
         method: 'DELETE',
         headers: {
@@ -326,31 +195,18 @@ const KidQuizManager = ({ lessonId, token }) => {
     }
   };
 
-  const openEditModal = async (quiz = null) => {
+  const openEditModal = (quiz = null) => {
     setCurrentQuiz(quiz);
     
     if (quiz) {
-      let answers = [];
-      if (QUIZ_TYPES.find(t => t.id === quiz.quizTypeId)?.fields.answers) {
-        try {
-          answers = await fetchAnswersByQuestionId(quiz.id);
-        } catch (err) {
-          console.error('Ошибка загрузки ответов:', err);
-          answers = [];
-        }
-      }
-      
       setFormData({
         lessonId: quiz.lessonId,
         quizTypeId: quiz.quizTypeId,
-        questionText: quiz.questionText,
+        questionText: quiz.questionText || '',
         audioUrl: quiz.audioUrl || '',
         imageUrl: quiz.imageUrl || '',
-        correctAnswer: quiz.correctAnswer,
-        answers: answers.length ? answers : [
-          { answerText: '', isCorrect: false },
-          { answerText: '', isCorrect: false }
-        ]
+        correctAnswer: quiz.correctAnswer || '',
+        answers: []
       });
     } else {
       setFormData({
@@ -360,10 +216,7 @@ const KidQuizManager = ({ lessonId, token }) => {
         audioUrl: '',
         imageUrl: '',
         correctAnswer: '',
-        answers: [
-          { answerText: '', isCorrect: false },
-          { answerText: '', isCorrect: false }
-        ]
+        answers: []
       });
     }
     
@@ -377,29 +230,9 @@ const KidQuizManager = ({ lessonId, token }) => {
     setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleAnswerChange = (index, field, value) => {
-    const newAnswers = [...formData.answers];
-    newAnswers[index][field] = field === 'isCorrect' ? value === 'true' : value;
-    setFormData(prev => ({ ...prev, answers: newAnswers }));
-    setFormErrors(prev => ({ ...prev, answers: '' }));
-  };
-
-  const addAnswer = () => {
-    setFormData(prev => ({
-      ...prev,
-      answers: [...prev.answers, { answerText: '', isCorrect: false }]
-    }));
-  };
-
-  const removeAnswer = (index) => {
-    if (formData.answers.length <= 2) return;
-    const newAnswers = formData.answers.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, answers: newAnswers }));
-  };
-
   const filteredQuizzes = quizzes.filter(quiz =>
-    quiz.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quiz.correctAnswer.toLowerCase().includes(searchTerm.toLowerCase())
+    quiz.questionText?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    quiz.correctAnswer?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getQuizTypeBadge = (typeId) => {
@@ -539,50 +372,6 @@ const KidQuizManager = ({ lessonId, token }) => {
                 </Col>
               </Row>
             )}
-            
-            {quiz.answers?.length > 0 && (
-              <Row>
-                <Col md={12} className="mb-3">
-                  <Card>
-                    <Card.Header className="d-flex align-items-center">
-                      <FaListAlt className="me-2" /> Все варианты ответов
-                    </Card.Header>
-                    <Card.Body className="p-0">
-                      <div className="table-responsive">
-                        <Table striped bordered hover className="mb-0">
-                          <thead>
-                            <tr>
-                              <th>#</th>
-                              <th>Вариант ответа</th>
-                              <th width="100px" className="text-center">Статус</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {quiz.answers.map((answer, index) => (
-                              <tr key={index} className={answer.isCorrect ? 'table-success' : ''}>
-                                <td>{index + 1}</td>
-                                <td>{answer.answerText}</td>
-                                <td className="text-center">
-                                  {answer.isCorrect ? (
-                                    <Badge bg="success">
-                                      <FaCheck className="me-1" /> Верный
-                                    </Badge>
-                                  ) : (
-                                    <Badge bg="secondary">
-                                      <FaTimes className="me-1" /> Неверный
-                                    </Badge>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              </Row>
-            )}
           </Tab>
         </Tabs>
         
@@ -695,7 +484,7 @@ const KidQuizManager = ({ lessonId, token }) => {
             {currentQuiz ? (
               <>
                 Редактирование теста 
-                <small className="text-muted">ID: {currentQuiz.id}</small>
+                <small className="text-muted ms-2">ID: {currentQuiz.id}</small>
               </>
             ) : 'Добавление нового теста'}
           </Modal.Title>
@@ -717,59 +506,28 @@ const KidQuizManager = ({ lessonId, token }) => {
                 value={formData.quizTypeId}
                 onChange={(e) => {
                   const newTypeId = parseInt(e.target.value);
+                  const newType = QUIZ_TYPES.find(t => t.id === newTypeId) || QUIZ_TYPES[0];
+                  
                   setFormData(prev => ({
                     ...prev,
                     quizTypeId: newTypeId,
-                    answers: QUIZ_TYPES.find(t => t.id === newTypeId)?.fields.answers ? [
-                      { answerText: '', isCorrect: false },
-                      { answerText: '', isCorrect: false }
-                    ] : []
+                    imageUrl: newType.requiresImage ? prev.imageUrl : '',
+                    audioUrl: newType.requiresAudio ? prev.audioUrl : '',
+                    correctAnswer: newType.requiresCorrectAnswer ? prev.correctAnswer : ''
                   }));
                 }}
               >
                 {QUIZ_TYPES.map(type => (
                   <option key={type.id} value={type.id}>
-                    {type.icon}
-                    <span className="ms-2">{type.label}</span>
+                    {type.icon} {type.label}
                   </option>
                 ))}
               </Form.Select>
             </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Текст вопроса *</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                name="questionText"
-                value={formData.questionText}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.questionText}
-              />
-              <Form.Control.Feedback type="invalid">
-                {formErrors.questionText}
-              </Form.Control.Feedback>
-            </Form.Group>
-            
-            {getCurrentQuizType().fields.correctAnswer && (
+
+            {getCurrentQuizType().requiresImage && (
               <Form.Group className="mb-3">
-                <Form.Label>Правильный ответ *</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="correctAnswer"
-                  value={formData.correctAnswer}
-                  onChange={handleInputChange}
-                  isInvalid={!!formErrors.correctAnswer}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {formErrors.correctAnswer}
-                </Form.Control.Feedback>
-              </Form.Group>
-            )}
-            
-            {getCurrentQuizType().fields.imageUrl && (
-              <Form.Group className="mb-3">
-                <Form.Label>URL изображения *</Form.Label>
+                <Form.Label>Ссылка на изображение *</Form.Label>
                 <Form.Control
                   type="url"
                   name="imageUrl"
@@ -783,10 +541,10 @@ const KidQuizManager = ({ lessonId, token }) => {
                 </Form.Control.Feedback>
               </Form.Group>
             )}
-            
-            {getCurrentQuizType().fields.audioUrl && (
+
+            {getCurrentQuizType().requiresAudio && (
               <Form.Group className="mb-3">
-                <Form.Label>URL аудио *</Form.Label>
+                <Form.Label>Ссылка на аудио *</Form.Label>
                 <Form.Control
                   type="url"
                   name="audioUrl"
@@ -800,60 +558,25 @@ const KidQuizManager = ({ lessonId, token }) => {
                 </Form.Control.Feedback>
               </Form.Group>
             )}
-            
-            {getCurrentQuizType().fields.answers && (
-              <>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5>Варианты ответов *</h5>
-                  <Button variant="outline-primary" size="sm" onClick={addAnswer}>
-                    <FaPlus className="me-1" /> Добавить вариант
-                  </Button>
-                </div>
-                
-                {formErrors.answers && (
-                  <Alert variant="danger" className="mb-3">
-                    {formErrors.answers}
-                  </Alert>
-                )}
-                
-                {formData.answers.map((answer, index) => (
-                  <div key={index} className="mb-3 p-2 p-sm-3 border rounded">
-                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
-                      <Form.Control
-                        type="text"
-                        value={answer.answerText}
-                        onChange={(e) => handleAnswerChange(index, 'answerText', e.target.value)}
-                        placeholder="Текст ответа"
-                        className="me-sm-2"
-                        isInvalid={!!formErrors.answers && !answer.answerText.trim()}
-                      />
-                      
-                      <div className="d-flex gap-2 w-100 w-sm-auto">
-                        <Form.Select
-                          value={answer.isCorrect.toString()}
-                          onChange={(e) => handleAnswerChange(index, 'isCorrect', e.target.value)}
-                          className="me-sm-2"
-                          style={{ minWidth: '120px' }}
-                        >
-                          <option value="false">Неверный</option>
-                          <option value="true">Верный</option>
-                        </Form.Select>
-                        
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => removeAnswer(index)}
-                          disabled={formData.answers.length <= 2}
-                          className="flex-shrink-0"
-                        >
-                          <FaTrash />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+
+            <Form.Group className="mb-3">
+              <Form.Label>Правильный ответ *</Form.Label>
+              <Form.Control
+                type="text"
+                name="correctAnswer"
+                value={formData.correctAnswer}
+                onChange={handleInputChange}
+                isInvalid={!!formErrors.correctAnswer}
+                placeholder={
+                  getCurrentQuizType().value === 'spelling' 
+                    ? 'Введите правильное написание слова' 
+                    : 'Введите правильный ответ'
+                }
+              />
+              <Form.Control.Feedback type="invalid">
+                {formErrors.correctAnswer}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Form>
         </Modal.Body>
         

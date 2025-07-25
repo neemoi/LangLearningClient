@@ -27,12 +27,14 @@ const KidLessonsList = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [formData, setFormData] = useState({
+    id: 0,
     title: '',
     description: '',
-    imageUrl: ''
+    imageUrl: '',
+    pdfUrl: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { filteredLessons, currentLessons, totalPages } = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -51,22 +53,20 @@ const KidLessonsList = ({
     };
   }, [lessons, searchTerm, currentPage]);
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    refreshData().finally(() => setIsRefreshing(false));
-  };
-
   const handleDelete = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/kid-lessons/${currentLesson.id}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/kid-lessons`, {
         method: 'DELETE',
         headers: {
+          "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
-        }
+        },
+        body: JSON.stringify({ id: currentLesson.id })
       });
       
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка удаления урока');
       }
       
       setShowDeleteModal(false);
@@ -78,10 +78,12 @@ const KidLessonsList = ({
 
   const prepareEditForm = (lesson = null) => {
     setCurrentLesson(lesson);
-    setFormData({
-      title: lesson?.title || '',
-      description: lesson?.description || '',
-      imageUrl: lesson?.imageUrl || ''
+    setFormData(lesson ? { ...lesson } : {
+      id: 0,
+      title: '',
+      description: '',
+      imageUrl: '',
+      pdfUrl: ''
     });
     setValidationErrors({});
     setShowEditModal(true);
@@ -93,27 +95,21 @@ const KidLessonsList = ({
     setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const isValidUrl = (url) => {
-    if (!url || url.trim() === '') return true;
-    try {
-      new URL(url);
-      return /^https?:\/\//i.test(url);
-    } catch {
-      return false;
-    }
-  };
-
-   const validateForm = () => {
+  const validateForm = () => {
     const errors = {};
     
     if (!formData.title.trim()) errors.title = 'Название обязательно';
     if (!formData.description.trim()) errors.description = 'Описание обязательно';
+    if (!formData.imageUrl.trim()) errors.imageUrl = 'URL изображения обязателен';
     
-    if (!formData.imageUrl.trim()) {
-      errors.imageUrl = 'URL изображения обязателен';
-    } else if (!isValidUrl(formData.imageUrl)) {
-      errors.imageUrl = 'Некорректный URL (должен начинаться с http:// или https://)';
-    }
+    const validateUrl = (url, fieldName) => {
+      if (url && !url.match(/^https?:\/\/.+/)) {
+        errors[fieldName] = 'Должен быть валидный URL (начинаться с http:// или https://)';
+      }
+    };
+    
+    validateUrl(formData.imageUrl, 'imageUrl');
+    validateUrl(formData.pdfUrl, 'pdfUrl');
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -121,13 +117,13 @@ const KidLessonsList = ({
 
   const handleSaveLesson = async () => {
     if (!validateForm()) return;
-  
+    
+    setIsSubmitting(true);
+    setError('');
+    
     try {
-      const url = currentLesson 
-        ? `${API_CONFIG.BASE_URL}/api/kid-lessons/${currentLesson.id}`
-        : `${API_CONFIG.BASE_URL}/api/kid-lessons`;
-
-      const method = currentLesson ? "PUT" : "POST";
+      const method = formData.id ? "PUT" : "POST";
+      const url = `${API_CONFIG.BASE_URL}/api/kid-lessons`;
 
       const response = await fetch(url, {
         method,
@@ -146,38 +142,37 @@ const KidLessonsList = ({
       await refreshData();
       setShowEditModal(false);
     } catch (err) {
-      setError(`Ошибка: ${err.message}`);
-      console.error("Ошибка запроса:", err);
+      setError(err.message || 'Ошибка сохранения урока');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Container fluid className="lessons-management px-4 py-5">
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg" centered>
+      <Modal show={showEditModal} onHide={() => !isSubmitting && setShowEditModal(false)} size="lg" centered>
         <Modal.Header closeButton className="border-0 pb-0">
           <Modal.Title className="fw-bold">
-            {currentLesson ? 'Редактирование урока' : 'Создание урока'}
+            {formData.id ? 'Редактирование урока' : 'Создание урока'}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-0">
           <Form>
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-medium">Название*</Form.Label>
+            <Form.Group className="mb-3">
+              <Form.Label>Название урока*</Form.Label>
               <Form.Control
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.title}
-                className="py-2"
-                required
               />
               <Form.Control.Feedback type="invalid">
                 {validationErrors.title}
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-medium">Описание*</Form.Label>
+            <Form.Group className="mb-3">
+              <Form.Label>Описание*</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -185,16 +180,14 @@ const KidLessonsList = ({
                 value={formData.description}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.description}
-                className="py-2"
-                required
               />
               <Form.Control.Feedback type="invalid">
                 {validationErrors.description}
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-4">
-              <Form.Label className="fw-medium">URL изображения*</Form.Label>
+            <Form.Group className="mb-3">
+              <Form.Label>URL изображения*</Form.Label>
               <Form.Control
                 type="url"
                 name="imageUrl"
@@ -202,34 +195,58 @@ const KidLessonsList = ({
                 value={formData.imageUrl}
                 onChange={handleInputChange}
                 isInvalid={!!validationErrors.imageUrl}
-                className="py-2"
-                required
               />
-              <Form.Text className="text-muted">
-                Обязательное поле. Должен быть валидным URL (начинаться с http:// или https://)
-              </Form.Text>
               <Form.Control.Feedback type="invalid">
                 {validationErrors.imageUrl}
               </Form.Control.Feedback>
             </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>URL PDF файла</Form.Label>
+              <Form.Control
+                type="url"
+                name="pdfUrl"
+                placeholder="https://example.com/document.pdf"
+                value={formData.pdfUrl}
+                onChange={handleInputChange}
+                isInvalid={!!validationErrors.pdfUrl}
+              />
+              <Form.Control.Feedback type="invalid">
+                {validationErrors.pdfUrl}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Form>
         </Modal.Body>
-        <Modal.Footer className="border-0 pt-0">
-          <Button variant="outline-secondary" onClick={() => setShowEditModal(false)}>
+        <Modal.Footer className="border-0">
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowEditModal(false)}
+            disabled={isSubmitting}
+          >
             Отмена
           </Button>
-          <Button variant="primary" onClick={handleSaveLesson} className="px-4">
-            Сохранить
+          <Button 
+            variant="primary" 
+            onClick={handleSaveLesson}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Spinner as="span" size="sm" animation="border" role="status" />
+                <span className="ms-2">Сохранение...</span>
+              </>
+            ) : 'Сохранить'}
           </Button>
         </Modal.Footer>
       </Modal>
 
+      {/* Модальное окно удаления */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Header closeButton className="border-0">
-          <Modal.Title className="fw-bold">Удаление урока</Modal.Title>
+          <Modal.Title>Удаление урока</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p className="mb-3">Вы уверены, что хотите удалить урок <strong>{currentLesson?.title}</strong>?</p>
+          <p>Вы уверены, что хотите удалить урок <strong>{currentLesson?.title}</strong>?</p>
           <Alert variant="warning" className="mb-0">
             Это действие нельзя отменить. Все связанные материалы будут удалены.
           </Alert>
@@ -238,7 +255,7 @@ const KidLessonsList = ({
           <Button variant="outline-secondary" onClick={() => setShowDeleteModal(false)}>
             Отмена
           </Button>
-          <Button variant="danger" onClick={handleDelete} className="px-4">
+          <Button variant="danger" onClick={handleDelete}>
             Удалить
           </Button>
         </Modal.Footer>
@@ -278,11 +295,11 @@ const KidLessonsList = ({
               <div className="d-flex gap-3">
                 <Button 
                   variant="light" 
-                  onClick={handleRefresh} 
+                  onClick={refreshData} 
                   className="px-3"
-                  disabled={isRefreshing}
+                  disabled={isLoading}
                 >
-                  <FaSyncAlt className={isRefreshing ? 'spin' : ''} />
+                  <FaSyncAlt className={isLoading ? 'spin' : ''} />
                 </Button>
                 
                 <Button 

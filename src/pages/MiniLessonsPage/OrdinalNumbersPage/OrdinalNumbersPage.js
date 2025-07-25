@@ -30,50 +30,50 @@ const OrdinalNumbersPage = () => {
     {
       title: "Ordinal Numbers (1st - 19th)",
       numbers: [
-        { value: "1st", text: "first", audio: "1.mp3" },
-        { value: "2nd", text: "second", audio: "2.mp3" },
-        { value: "3rd", text: "third", audio: "3.mp3" },
-        { value: "4th", text: "fourth", audio: "4.mp3" },
-        { value: "5th", text: "fifth", audio: "5.mp3" },
-        { value: "6th", text: "sixth", audio: "6.mp3" },
-        { value: "7th", text: "seventh", audio: "7.mp3" },
-        { value: "8th", text: "eighth", audio: "8.mp3" },
-        { value: "9th", text: "ninth", audio: "9.mp3" },
-        { value: "10th", text: "tenth", audio: "10.mp3" },
-        { value: "11th", text: "eleventh", audio: "11.mp3" },
-        { value: "12th", text: "twelfth", audio: "12.mp3" },
-        { value: "13th", text: "thirteenth", audio: "13.mp3" },
-        { value: "14th", text: "fourteenth", audio: "14.mp3" },
-        { value: "15th", text: "fifteenth", audio: "15.mp3" },
-        { value: "16th", text: "sixteenth", audio: "16.mp3" },
-        { value: "17th", text: "seventeenth", audio: "17.mp3" },
-        { value: "18th", text: "eighteenth", audio: "18.mp3" },
-        { value: "19th", text: "nineteenth", audio: "19.mp3" }
+        { value: "1st", text: "first"},
+        { value: "2nd", text: "second" },
+        { value: "3rd", text: "third"},
+        { value: "4th", text: "fourth"},
+        { value: "5th", text: "fifth"},
+        { value: "6th", text: "sixth"},
+        { value: "7th", text: "seventh"},
+        { value: "8th", text: "eighth"},
+        { value: "9th", text: "ninth"},
+        { value: "10th", text: "tenth" },
+        { value: "11th", text: "eleventh"},
+        { value: "12th", text: "twelfth"},
+        { value: "13th", text: "thirteenth"},
+        { value: "14th", text: "fourteenth"},
+        { value: "15th", text: "fifteenth"},
+        { value: "16th", text: "sixteenth"},
+        { value: "17th", text: "seventeenth"},
+        { value: "18th", text: "eighteenth"},
+        { value: "19th", text: "nineteenth"}
       ],
       btnClass: "group-1"
     },
     {
       title: "Ordinal Numbers (20th - 90th)",
       numbers: [
-        { value: "20th", text: "twentieth", audio: "20.mp3" },
-        { value: "30th", text: "thirtieth", audio: "30.mp3" },
-        { value: "40th", text: "fortieth", audio: "40.mp3" },
-        { value: "50th", text: "fiftieth", audio: "50.mp3" },
-        { value: "60th", text: "sixtieth", audio: "60.mp3" },
-        { value: "70th", text: "seventieth", audio: "70.mp3" },
-        { value: "80th", text: "eightieth", audio: "80.mp3" },
-        { value: "90th", text: "ninetieth", audio: "90.mp3" }
+        { value: "20th", text: "twentieth" },
+        { value: "30th", text: "thirtieth"},
+        { value: "40th", text: "fortieth"},
+        { value: "50th", text: "fiftieth" },
+        { value: "60th", text: "sixtieth"},
+        { value: "70th", text: "seventieth"},
+        { value: "80th", text: "eightieth"},
+        { value: "90th", text: "ninetieth"}
       ],
       btnClass: "group-2"
     },
     {
       title: "Ordinal Numbers (100th - 1,000,000,000,000th)",
       numbers: [
-        { value: "100th", text: "one hundredth", audio: "100.mp3" },
-        { value: "1,000th", text: "one thousandth", audio: "1000.mp3" },
-        { value: "1,000,000th", text: "one millionth", audio: "1000000.mp3" },
-        { value: "1,000,000,000th", text: "one billionth", audio: "1000000000.mp3" },
-        { value: "1,000,000,000,000th", text: "one trillionth", audio: "1000000000000.mp3" }
+        { value: "100th", text: "one hundredth"},
+        { value: "1,000th", text: "one thousandth"},
+        { value: "1,000,000th", text: "one millionth"},
+        { value: "1,000,000,000th", text: "one billionth"},
+        { value: "1,000,000,000,000th", text: "one trillionth"}
       ],
       btnClass: "group-3"
     }

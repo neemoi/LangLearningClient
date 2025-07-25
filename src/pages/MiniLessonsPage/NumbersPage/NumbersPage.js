@@ -49,13 +49,23 @@ const NumbersPage = () => {
   ];
 
   useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      navigate('/');
+      return;
+    }
+
     setIsMounted(true);
     return () => setIsMounted(false);
-  }, []);
+  }, [navigate]);
 
   const handleCategoryClick = (categoryId) => {
     navigate(`/numbers/${categoryId}`);
   };
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
 
   return (
     <div className={`numbers-page ${isMounted ? 'numbers-page--loaded' : ''}`}>

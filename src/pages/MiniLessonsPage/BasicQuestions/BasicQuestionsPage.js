@@ -23,6 +23,12 @@ const BasicQuestionsPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      navigate('/');
+      return;
+    }
+
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/api/MainQuestions/categories`);
@@ -40,7 +46,11 @@ const BasicQuestionsPage = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [navigate]);
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
 
   const handleCategoryClick = (id) => {
     navigate(`/mini-lessons/basic-questions/${id}`);

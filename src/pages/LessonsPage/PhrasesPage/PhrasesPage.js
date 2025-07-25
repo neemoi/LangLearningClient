@@ -258,17 +258,7 @@ const PhrasesPage = () => {
             <>
               <div className="phrases-full-width-player">
                 <div className="phrases-player-container">
-                  <div className="phrases-player-image">
-                    {phrases[currentPhraseIndex]?.imageUrl && (
-                      <img 
-                        src={phrases[currentPhraseIndex].imageUrl} 
-                        alt={phrases[currentPhraseIndex].phraseText} 
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/200x200?text=No+Image';
-                        }}
-                      />
-                    )}
-                  </div>
+                 
                   <div className="phrases-player-content">
                     <div className="phrases-current-phrase-display">
                       <h3>{phrases[currentPhraseIndex]?.phraseText || 'Нет фразы'}</h3>

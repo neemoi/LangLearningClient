@@ -104,6 +104,7 @@ const AudioTestPage = () => {
     learnedWordsOverall: 0
   });
   const [detailedProgress, setDetailedProgress] = useState(null);
+  const [existingProgressRecords, setExistingProgressRecords] = useState([]);
 
   useEffect(() => {
     let interval;
@@ -186,6 +187,10 @@ const AudioTestPage = () => {
         totalWordsOverall: 0,
         learnedWordsOverall: 0
       });
+
+      if (progressData?.words) {
+        setExistingProgressRecords(progressData.words);
+      }
     } catch (error) {
       console.error('Ошибка при загрузке данных:', error);
     } finally {
@@ -279,21 +284,84 @@ const AudioTestPage = () => {
     audio.onended = () => setIsPlaying(false);
   }, [currentQuestionIndex, shuffledQuestions]);
 
-  const sendProgress = useCallback(async (isCorrect) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      
-      const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      const payload = {
-        userId: user.id,
-        lessonId: parseInt(lessonId),
-        wordId: currentQuestion.wordId,
-        questionType: 2, // 2 = audio test
-        isCorrect,
-        lessonWordId: currentQuestion.lessonWordId || 0
-      };
+  const findExistingProgress = useCallback((wordId, questionType) => {
+    if (!existingProgressRecords?.length) return null;
+    
+    const questionTypeStr = questionType === 2 ? 'AudioChoice' : 'ImageAudioChoice';
+    
+    return existingProgressRecords.find(record => 
+      record.wordId === wordId && 
+      record.questionType === questionTypeStr
+    );
+  }, [existingProgressRecords]);
 
+  const finishTest = useCallback(() => {
+    setTimerActive(false);
+    setShowResults(true);
+  }, []);
+
+  const goToNextQuestion = useCallback(() => {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer(null);
+      setQuestionTimeLeft(15);
+      setTimeExpired(false);
+      setIsPlaying(false);
+    } else {
+      finishTest();
+    }
+  }, [currentQuestionIndex, shuffledQuestions.length, finishTest]);
+
+  const sendProgress = useCallback(async (isCorrect) => {
+  try {
+    const token = localStorage.getItem('userToken');
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    const progressResponse = await fetch(
+      `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress/user/${user.id}/${lessonId}`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    
+    const existingProgress = await progressResponse.json();
+    
+    const questionTypeId = 2; 
+    const existingRecord = existingProgress.find(
+      record => 
+        record.wordId === currentQuestion.wordId && 
+        record.questionType === 'AudioChoice'
+    );
+
+    const payload = {
+      userId: user.id,
+      lessonId: parseInt(lessonId),
+      wordId: currentQuestion.wordId,
+      questionType: questionTypeId, 
+      isCorrect,
+      lessonWordId: currentQuestion.lessonWordId || 0
+    };
+
+    if (existingRecord) {
+      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: existingRecord.id,
+          userId: user.id,
+          lessonId: parseInt(lessonId),
+          wordId: currentQuestion.wordId,
+          questionType: 'AudioChoice', 
+          isCorrect,
+          lessonWordId: currentQuestion.lessonWordId || 0
+        })
+      });
+    } else {
       await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
         method: 'POST',
         headers: {
@@ -302,37 +370,30 @@ const AudioTestPage = () => {
         },
         body: JSON.stringify(payload)
       });
-    } catch (error) {
-      console.error('Error sending progress:', error);
     }
-  }, [currentQuestionIndex, lessonId, shuffledQuestions]);
 
-  const startTest = () => {
-    if (testQuestions[TEST_TYPES.AUDIO].length === 0) {
-      alert(`Нет вопросов для аудио теста. Доступно:
-      Аудио: ${testQuestions.audio.length}
-      Продвинутый тест: ${testQuestions['advanced-test'].length}`);
-      return;
-    }
-    
-    setTestStarted(true);
-    setTimerActive(true);
-    setCurrentQuestionIndex(0);
-    setScore(0);
-    setErrors(0);
-    setTime(0);
-    setShowResults(false);
-    setSelectedAnswer(null);
-    setQuestionTimeLeft(15);
-    setTimeExpired(false);
-    setIsPlaying(false);
-  };
+    const updatedRecords = existingRecord
+      ? existingProgressRecords.map(record => 
+          record.id === existingRecord.id ? { ...record, isCorrect } : record
+        )
+      : [...existingProgressRecords, {
+          ...payload,
+          id: Date.now(),
+          questionType: 'AudioChoice',
+          wordText: currentQuestion.correctAnswer
+        }];
+
+    setExistingProgressRecords(updatedRecords);
+  } catch (error) {
+    console.error('Error sending progress:', error);
+  }
+}, [currentQuestionIndex, lessonId, shuffledQuestions, existingProgressRecords]);
 
   const handleTimeExpired = useCallback(async () => {
     setErrors(prev => prev + 1);
     await sendProgress(false);
     setTimeout(goToNextQuestion, 2000);
-  }, [sendProgress]);
+  }, [sendProgress, goToNextQuestion]);
 
   const handleAnswerSelect = useCallback(async (answer) => {
     const currentQuestion = shuffledQuestions[currentQuestionIndex];
@@ -349,24 +410,7 @@ const AudioTestPage = () => {
     
     await sendProgress(isCorrect);
     setTimeout(goToNextQuestion, 2000);
-  }, [currentQuestionIndex, shuffledQuestions, timeExpired, sendProgress]);
-
-  const goToNextQuestion = useCallback(() => {
-    if (currentQuestionIndex < shuffledQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer(null);
-      setQuestionTimeLeft(15);
-      setTimeExpired(false);
-      setIsPlaying(false);
-    } else {
-      finishTest();
-    }
-  }, [currentQuestionIndex, shuffledQuestions.length]);
-
-  const finishTest = useCallback(() => {
-    setTimerActive(false);
-    setShowResults(true);
-  }, []);
+  }, [currentQuestionIndex, shuffledQuestions, timeExpired, sendProgress, goToNextQuestion]);
 
   const getOptionClass = useCallback((option) => {
     if (!selectedAnswer && !timeExpired) return '';
@@ -388,6 +432,27 @@ const AudioTestPage = () => {
   const navigateToTest = useCallback((testId) => {
     navigate(`/lessonsVirtual/${lessonId}/${testId}`);
   }, [lessonId, navigate]);
+
+  const startTest = () => {
+    if (testQuestions[TEST_TYPES.AUDIO].length === 0) {
+      alert(`Нет вопросов для аудио теста. Доступно:
+      Аудио: ${testQuestions.audio.length}
+      Продвинутый тест: ${testQuestions['advanced-test'].length}`);
+      return;
+    }
+    
+    setTestStarted(true);
+    setTimerActive(true);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setErrors(0);
+    setTime(0);
+    setShowResults(false);
+    setSelectedAnswer(null);
+    setQuestionTimeLeft(15);
+    setTimeExpired(false);
+    setIsPlaying(false);
+  };
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex] || {};
   const totalQuestions = shuffledQuestions.length;

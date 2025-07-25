@@ -37,12 +37,12 @@ const WordsByBasicQuestionsPage = () => {
   const stopButtonTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!localStorage.getItem('currentUser')) {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
       navigate('/');
+      return;
     }
-  }, [navigate]);
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/api/MainQuestions/categories/${id}`);
@@ -85,7 +85,11 @@ const WordsByBasicQuestionsPage = () => {
         synthRef.current.onvoiceschanged = null;
       }
     };
-  }, [id]);
+  }, [id, navigate]);
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
 
   const initSpeech = () => {
     if (!window.speechSynthesis) {
@@ -238,8 +242,6 @@ const WordsByBasicQuestionsPage = () => {
     setData(prev => ({ ...prev, currentWord: word }));
     await speak(word.name);
   };
-
-  if (!localStorage.getItem('currentUser')) return null;
 
   if (data.loading) {
     return (

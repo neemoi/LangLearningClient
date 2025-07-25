@@ -51,6 +51,13 @@ import BasicQuestionsPage from './pages/MiniLessonsPage/BasicQuestions/BasicQues
 import WordsByBasicQuestionsPage from './pages/MiniLessonsPage/BasicQuestions/WordsByBasicQuestionsPage';
 import EnglishNamesPage from './pages/MiniLessonsPage/EnglishNamesPage/EnglishNamesPage';
 import EnglishNamesMaleFemalePage from './pages/MiniLessonsPage/EnglishNamesPage/EnglishNamesMaleFemalePage';
+import KidsLessonsPage from './pages/KidsLessonsPage/KidsLessonsPage';
+import KidsKeywordsPage from './pages/KidsLessonsPage/KidsKeywordsPage';
+import KidMonitoringPage from './pages/KidsLessonsPage/KidMonitoringPage';
+import ImageAudioPage from './pages/KidsLessonsPage/Quizes/ImageAudio/ImageAudioPage';
+import AudioQuizPage from './pages/KidsLessonsPage/Quizes/Audio/AudioQuizPage';
+import ImageQuizPage from './pages/KidsLessonsPage/Quizes/Image/ImageQuizPage';
+import SpellingQuizPage from './pages/KidsLessonsPage/Quizes/SpellingQuiz/SpellingQuizPage';
 
 function App() {
   return (
@@ -101,6 +108,14 @@ function App() {
         <Route path="/alphabet/:letter" element={<WordsByLetterPage />} />
         <Route path="/functions" element={<PartsOfSpeechPage />} />
         <Route path="/functions/:id" element={<WordsByPartOfSpeechPage />} />
+        <Route path="/kids" element={<KidsLessonsPage />} />
+        <Route path="/kids-monitoring/:lessonId" element={<KidMonitoringPage />} />
+        <Route path="/kids-lessons/:lessonId" element={<KidsLessonsPage />} />
+        <Route path="/kids-lessons/:lessonId/keywords" element={<KidsKeywordsPage />} />
+        <Route path="/kids-lessons/:lessonId/quiz-3" element={<ImageAudioPage />} />
+        <Route path="/kids-lessons/:lessonId/quiz-2" element={<AudioQuizPage />} />
+        <Route path="/kids-lessons/:lessonId/quiz-1" element={<ImageQuizPage />} />
+        <Route path="/kids-lessons/:lessonId/quiz-4" element={<SpellingQuizPage />} />
         
         <Route path="/admin" element={<AdminPage />}>
           <Route index element={<AdminDashboard />} />

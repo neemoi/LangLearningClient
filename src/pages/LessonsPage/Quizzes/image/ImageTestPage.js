@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
-import API_CONFIG from '../../../../components/src/config';
+import TestSidebar from './TestSidebar';
+import StartScreen from './StartScreen';
 import ActiveTestScreen from './ActiveTestScreen';
 import ResultsTestScreen from './ResultsImageScreen';
-import StartScreen from './StartScreen';
 import EmptyTestState from './../audioImage/EmptyTestState';
-import TestSidebar from './TestSidebar';
+import API_CONFIG from '../../../../components/src/config';
 import './css/ImageTestPage.css';
 
 const TEST_TYPES = {
@@ -103,6 +103,308 @@ const ImageTestPage = () => {
     learnedWordsOverall: 0
   });
   const [detailedProgress, setDetailedProgress] = useState(null);
+  const [userProgressRecords, setUserProgressRecords] = useState([]);
+
+  const getQuestionTypeName = (type) => {
+    switch(type) {
+      case TEST_TYPES.IMAGE: return 'ImageChoice';
+      case TEST_TYPES.AUDIO: return 'AudioChoice';
+      case TEST_TYPES.AUDIO_IMAGE: return 'AudioImageChoice';
+      case TEST_TYPES.SPELLING: return 'Spelling';
+      case TEST_TYPES.GRAMMAR: return 'Grammar';
+      case TEST_TYPES.PRONUNCIATION: return 'Pronunciation';
+      case TEST_TYPES.ADVANCED: return 'AdvancedTest';
+      default: return '';
+    }
+  };
+
+  const getQuestionTypeId = (type) => {
+    switch(type) {
+      case TEST_TYPES.IMAGE: return 1;
+      case TEST_TYPES.AUDIO: return 2;
+      case TEST_TYPES.AUDIO_IMAGE: return 3;
+      case TEST_TYPES.SPELLING: return 4;
+      case TEST_TYPES.GRAMMAR: return 5;
+      case TEST_TYPES.PRONUNCIATION: return 6;
+      case TEST_TYPES.ADVANCED: return 7;
+      default: return 0;
+    }
+  };
+
+  const handleUnauthorized = useCallback(() => {
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userToken');
+    navigate('/');
+  }, [navigate]);
+
+  const sendProgress = useCallback(async (isCorrect) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      if (!user?.id) {
+        handleUnauthorized();
+        return;
+      }
+
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+      if (!currentQuestion) return;
+
+      const progressResponse = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress/user/${user.id}/${lessonId}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const existingRecords = await progressResponse.json();
+
+      const existingRecord = existingRecords.find(record => 
+        record.wordId === currentQuestion.wordId && 
+        record.questionType === getQuestionTypeName(testType)
+      );
+
+      if (existingRecord) {
+        const putPayload = {
+          id: existingRecord.id,
+          userId: user.id,
+          lessonId: parseInt(lessonId),
+          wordId: currentQuestion.wordId,
+          questionType: getQuestionTypeName(testType),
+          isCorrect,
+          lessonWordId: currentQuestion.lessonWordId || 0
+        };
+
+        const putResponse = await fetch(
+          `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(putPayload)
+          }
+        );
+
+        if (putResponse.ok) {
+          const updatedRecord = await putResponse.json();
+          setUserProgressRecords(prev => 
+            prev.map(record => 
+              record.id === existingRecord.id ? updatedRecord : record
+            )
+          );
+        }
+      } else {
+        const postPayload = {
+          userId: user.id,
+          lessonId: parseInt(lessonId),
+          wordId: currentQuestion.wordId,
+          questionType: getQuestionTypeId(testType),
+          isCorrect,
+          lessonWordId: currentQuestion.lessonWordId || 0
+        };
+
+        const postResponse = await fetch(
+          `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(postPayload)
+          }
+        );
+
+        if (postResponse.ok) {
+          const newRecord = await postResponse.json();
+          setUserProgressRecords(prev => [...prev, newRecord]);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке прогресса:', error);
+    }
+  }, [currentQuestionIndex, lessonId, shuffledQuestions, testType, handleUnauthorized]);
+
+  const finishTest = useCallback(() => {
+    setTimerActive(false);
+    setShowResults(true);
+  }, []);
+
+  const goToNextQuestion = useCallback(() => {
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
+      setSelectedAnswer(null);
+      setQuestionTimeLeft(12);
+      setTimeExpired(false);
+    } else {
+      finishTest();
+    }
+  }, [currentQuestionIndex, shuffledQuestions.length, finishTest]);
+
+  const handleTimeExpired = useCallback(async () => {
+    const newErrors = errors + 1;
+    setErrors(newErrors);
+    await sendProgress(false);
+    setTimeout(goToNextQuestion, 2000);
+  }, [errors, sendProgress, goToNextQuestion]);
+
+  const handleAnswerSelect = useCallback(async (answer) => {
+    if (!shuffledQuestions[currentQuestionIndex] || timeExpired) return;
+    
+    const isCorrect = answer === shuffledQuestions[currentQuestionIndex].correctAnswer;
+    setSelectedAnswer(answer);
+    
+    if (isCorrect) {
+      setScore(prevScore => prevScore + 1);
+    } else {
+      setErrors(prevErrors => prevErrors + 1);
+    }
+    
+    await sendProgress(isCorrect);
+    setTimeout(goToNextQuestion, 2000);
+  }, [currentQuestionIndex, shuffledQuestions, timeExpired, sendProgress, goToNextQuestion]);
+
+  const getOptionClass = useCallback((option) => {
+    if (!selectedAnswer && !timeExpired) return "option-btn";
+    
+    const isCorrect = option === shuffledQuestions[currentQuestionIndex]?.correctAnswer;
+    const isSelected = option === selectedAnswer;
+    
+    if (timeExpired && isCorrect) return "option-btn correct-highlight";
+    if (isCorrect && (selectedAnswer || timeExpired)) return "option-btn correct";
+    if (isSelected && !isCorrect) return "option-btn incorrect";
+    return "option-btn";
+  }, [currentQuestionIndex, selectedAnswer, shuffledQuestions, timeExpired]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
+
+  const navigateToTest = useCallback((testId) => {
+    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
+  }, [lessonId, navigate]);
+
+  const generateOptions = (correctAnswer, wordsData, count = 4) => {
+    if (!wordsData?.length) return [correctAnswer];
+    
+    const otherWords = wordsData
+      .filter(word => word.name.toLowerCase() !== correctAnswer?.toLowerCase())
+      .map(word => word.name);
+    
+    const randomWords = [...otherWords]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, count - 1);
+    
+    return [...randomWords, correctAnswer].sort(() => 0.5 - Math.random());
+  };
+
+  const processQuestions = (quizzesData, wordsData, lessonWordsData) => {
+    const result = {
+      [TEST_TYPES.IMAGE]: [],
+      [TEST_TYPES.AUDIO]: [],
+      [TEST_TYPES.AUDIO_IMAGE]: [],
+      [TEST_TYPES.SPELLING]: [],
+      [TEST_TYPES.GRAMMAR]: [],
+      [TEST_TYPES.PRONUNCIATION]: [],
+      [TEST_TYPES.ADVANCED]: []
+    };
+
+    const wordsDict = wordsData.reduce((acc, word) => {
+      acc[word.name.toLowerCase()] = word;
+      return acc;
+    }, {});
+
+    const lessonWordsDict = lessonWordsData.reduce((acc, lw) => {
+      acc[lw.wordId] = lw;
+      return acc;
+    }, {});
+
+    quizzesData.forEach(quiz => {
+      quiz.questions?.forEach(question => {
+        const normalizedAnswer = question.correctAnswer?.toLowerCase().trim();
+        const word = wordsDict[normalizedAnswer];
+        const lessonWord = word ? lessonWordsDict[word.id] : null;
+
+        const processedQuestion = {
+          ...question,
+          wordId: word?.id,
+          lessonWordId: lessonWord?.id || 0,
+          options: generateOptions(question.correctAnswer, wordsData, 4)
+        };
+
+        const qType = question.questionType?.toLowerCase();
+        if (qType.includes('image') && !qType.includes('audio')) {
+          result[TEST_TYPES.IMAGE].push(processedQuestion);
+        } else if (qType.includes('audio') && !qType.includes('image')) {
+          result[TEST_TYPES.AUDIO].push(processedQuestion);
+        } else if (qType.includes('audio') && qType.includes('image')) {
+          result[TEST_TYPES.AUDIO_IMAGE].push(processedQuestion);
+        } else if (qType.includes('spelling')) {
+          result[TEST_TYPES.SPELLING].push(processedQuestion);
+        } else if (qType.includes('grammar')) {
+          result[TEST_TYPES.GRAMMAR].push(processedQuestion);
+        } else if (qType.includes('pronunciation')) {
+          result[TEST_TYPES.PRONUNCIATION].push(processedQuestion);
+        } else if (qType.includes('advanced')) {
+          result[TEST_TYPES.ADVANCED].push(processedQuestion);
+        }
+      });
+    });
+
+    return result;
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('userToken');
+      const user = JSON.parse(localStorage.getItem('currentUser'));
+      
+      const [allWordsRes, lessonWordsRes, quizzesRes, progressRes, wordStatsRes, userProgressRes] = await Promise.all([
+        fetch(`${API_CONFIG.BASE_URL}/api/Words`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/words`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/quizzes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-stats/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress/user/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      const [allWordsData, lessonWordsData, quizzesData, progressData, wordStatsData, userProgressData] = await Promise.all([
+        allWordsRes.json(),
+        lessonWordsRes.json(),
+        quizzesRes.json(),
+        progressRes.json(),
+        wordStatsRes.json(),
+        userProgressRes.json()
+      ]);
+      
+      setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
+      setLessonWords(Array.isArray(lessonWordsData) ? lessonWordsData : []);
+      setTestQuestions(processQuestions(quizzesData, allWordsData, lessonWordsData));
+      setDetailedProgress(progressData || null);
+      setWordStats(wordStatsData || {
+        totalWordsInLesson: 0,
+        learnedWordsInLesson: 0,
+        totalWordsOverall: 0,
+        learnedWordsOverall: 0
+      });
+      setUserProgressRecords(Array.isArray(userProgressData) ? userProgressData : []);
+    } catch (error) {
+      console.error('Ошибка при загрузке данных:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -141,121 +443,7 @@ const ImageTestPage = () => {
       handleTimeExpired();
     }
     return () => clearInterval(questionInterval);
-  }, [testStarted, showResults, questionTimeLeft, timeExpired]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      
-      const [allWordsRes, lessonWordsRes, quizzesRes, progressRes, wordStatsRes] = await Promise.all([
-        fetch(`${API_CONFIG.BASE_URL}/api/Words`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/words`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_CONFIG.BASE_URL}/api/Lessons/${lessonId}/quizzes`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-stats/${user.id}/${lessonId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ]);
-
-      const [allWordsData, lessonWordsData, quizzesData, progressData, wordStatsData] = await Promise.all([
-        allWordsRes.json(),
-        lessonWordsRes.json(),
-        quizzesRes.json(),
-        progressRes.json(),
-        wordStatsRes.json()
-      ]);
-      
-      setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
-      setLessonWords(Array.isArray(lessonWordsData) ? lessonWordsData : []);
-      setTestQuestions(processQuestions(quizzesData, allWordsData));
-      setDetailedProgress(progressData || null);
-      setWordStats(wordStatsData || {
-        totalWordsInLesson: 0,
-        learnedWordsInLesson: 0,
-        totalWordsOverall: 0,
-        learnedWordsOverall: 0
-      });
-    } catch (error) {
-      console.error('Ошибка при загрузке данных:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const processQuestions = (quizzesData, wordsData) => {
-    const result = {
-      [TEST_TYPES.IMAGE]: [],
-      [TEST_TYPES.AUDIO]: [],
-      [TEST_TYPES.AUDIO_IMAGE]: [],
-      [TEST_TYPES.SPELLING]: [],
-      [TEST_TYPES.GRAMMAR]: [],
-      [TEST_TYPES.PRONUNCIATION]: [],
-      [TEST_TYPES.ADVANCED]: []
-    };
-
-    if (!Array.isArray(quizzesData)) {
-      console.error('quizzesData не является массивом:', quizzesData);
-      return result;
-    }
-
-    quizzesData.forEach(quiz => {
-      if (quiz.questions && Array.isArray(quiz.questions)) {
-        quiz.questions.forEach(question => {
-          const processedQuestion = {
-            ...question,
-            options: generateOptions(question.correctAnswer, wordsData, 4)
-          };
-
-          const qType = (question.questionType || '').toLowerCase();
-          
-          if (qType.includes('image') && !qType.includes('audio')) {
-            result[TEST_TYPES.IMAGE].push(processedQuestion);
-          } else if (qType.includes('audio') && !qType.includes('image')) {
-            result[TEST_TYPES.AUDIO].push(processedQuestion);
-          } else if (qType.includes('audio') && qType.includes('image')) {
-            result[TEST_TYPES.AUDIO_IMAGE].push(processedQuestion);
-          } else if (qType.includes('spelling')) {
-            result[TEST_TYPES.SPELLING].push(processedQuestion);
-          } else if (qType.includes('grammar')) {
-            result[TEST_TYPES.GRAMMAR].push(processedQuestion);
-          } else if (qType.includes('pronunciation')) {
-            result[TEST_TYPES.PRONUNCIATION].push(processedQuestion);
-          } else if (qType.includes('advanced')) {
-            result[TEST_TYPES.ADVANCED].push(processedQuestion);
-          }
-        });
-      }
-    });
-
-    return result;
-  };
-
-  const generateOptions = (correctAnswer, wordsData, count = 4) => {
-    if (!Array.isArray(wordsData) || wordsData.length === 0 || !correctAnswer) {
-      return [correctAnswer].filter(Boolean);
-    }
-    
-    const otherWords = wordsData
-      .filter(word => word?.name?.toLowerCase() !== correctAnswer?.toLowerCase())
-      .map(word => word.name)
-      .filter(Boolean);
-    
-    const randomWords = [...otherWords]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, count - 1);
-    
-    return [...randomWords, correctAnswer].sort(() => 0.5 - Math.random());
-  };
+  }, [testStarted, showResults, questionTimeLeft, timeExpired, handleTimeExpired]);
 
   const startTest = () => {
     if (testQuestions[testType].length === 0) {
@@ -281,122 +469,6 @@ const ImageTestPage = () => {
     setSelectedAnswer(null);
     setQuestionTimeLeft(12);
     setTimeExpired(false);
-  };
-
-  const handleTimeExpired = async () => {
-    const newErrors = errors + 1;
-    setErrors(newErrors);
-    await sendProgress(false);
-    setTimeout(goToNextQuestion, 2000);
-  };
-
-  const handleAnswerSelect = async (answer) => {
-    if (!shuffledQuestions[currentQuestionIndex] || timeExpired) return;
-    
-    const isCorrect = answer === shuffledQuestions[currentQuestionIndex].correctAnswer;
-    setSelectedAnswer(answer);
-    
-    if (isCorrect) {
-      setScore(prevScore => prevScore + 1);
-    } else {
-      setErrors(prevErrors => prevErrors + 1);
-    }
-    
-    await sendProgress(isCorrect);
-    setTimeout(goToNextQuestion, 2000);
-  };
-
-  const goToNextQuestion = () => {
-    if (currentQuestionIndex < shuffledQuestions.length - 1) {
-      setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-      setSelectedAnswer(null);
-      setQuestionTimeLeft(12);
-      setTimeExpired(false);
-    } else {
-      finishTest();
-    }
-  };
-
-  const finishTest = () => {
-    setTimerActive(false);
-    setShowResults(true);
-  };
-
-  const sendProgress = async (isCorrect) => {
-    try {
-      const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      if (!user?.id) {
-        handleUnauthorized();
-        return;
-      }
-
-      const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      const word = allWords.find(w => 
-        w.name?.toLowerCase() === currentQuestion?.correctAnswer?.toLowerCase()
-      );
-      
-      const lessonWord = lessonWords.find(lw => lw.wordId === word?.id);
-      
-      const payload = {
-        userId: user.id,
-        lessonId: parseInt(lessonId),
-        wordId: word?.id || 0,
-        questionType: getQuestionTypeId(testType),
-        isCorrect,
-        lessonWordId: lessonWord?.id || 0
-      };
-
-      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-    } catch (error) {
-      console.error('Ошибка при отправке прогресса:', error);
-    }
-  };
-
-  const getQuestionTypeId = (type) => {
-    switch(type) {
-      case TEST_TYPES.IMAGE: return 1;
-      case TEST_TYPES.AUDIO: return 2;
-      case TEST_TYPES.AUDIO_IMAGE: return 3;
-      case TEST_TYPES.SPELLING: return 4;
-      case TEST_TYPES.GRAMMAR: return 5;
-      case TEST_TYPES.PRONUNCIATION: return 6;
-      case TEST_TYPES.ADVANCED: return 7;
-      default: return 0;
-    }
-  };
-
-  const getOptionClass = (option) => {
-    if (!selectedAnswer && !timeExpired) return "option-btn";
-    
-    const isCorrect = option === shuffledQuestions[currentQuestionIndex]?.correctAnswer;
-    const isSelected = option === selectedAnswer;
-    
-    if (timeExpired && isCorrect) return "option-btn correct-highlight";
-    if (isCorrect && (selectedAnswer || timeExpired)) return "option-btn correct";
-    if (isSelected && !isCorrect) return "option-btn incorrect";
-    return "option-btn";
-  };
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const navigateToTest = (testId) => {
-    navigate(`/lessonsVirtual/${lessonId}/${testId}`);
-  };
-
-  const handleUnauthorized = () => {
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('userToken');
-    navigate('/');
   };
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex] || {};
@@ -475,7 +547,7 @@ const ImageTestPage = () => {
                   testType={testType}
                   currentQuestion={currentQuestion}
                   currentQuestionIndex={currentQuestionIndex}
-                  totalQuestions={shuffledQuestions.length}
+                  totalQuestions={totalQuestions}
                   questionTimeLeft={questionTimeLeft}
                   score={score}
                   errors={errors}

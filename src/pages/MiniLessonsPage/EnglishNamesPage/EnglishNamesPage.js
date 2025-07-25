@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FaFemale,
   FaMale,
@@ -11,6 +11,18 @@ import './css/EnglishNamesPage.css';
 
 const EnglishNamesPage = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
 
   return (
     <div className="english-names-page-layout">

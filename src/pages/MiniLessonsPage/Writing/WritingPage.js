@@ -9,6 +9,20 @@ const WritingPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      navigate('/');
+      return;
+    }
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, [navigate]);
+
+  if (!localStorage.getItem('currentUser')) {
+    return null;
+  }
+
   const categories = [
     { 
       id: 'letters', 
@@ -35,11 +49,6 @@ const WritingPage = () => {
       icon: 'https://winner.gfriend.com/Content/images/icon-writingsentences.png'
     }
   ];
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
 
   const handleCategoryClick = (categoryId) => {
     navigate(`/writing/${categoryId}`);

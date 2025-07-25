@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navigation from '../../../../components/layout/Navigation/Navigation';
 import Sidebar from '../../../../components/layout/Sidebar/Sidebar';
@@ -103,6 +103,13 @@ const AudioImageTestPage = () => {
     learnedWordsOverall: 0
   });
   const [testResults, setTestResults] = useState([]);
+  const [userProgressRecords, setUserProgressRecords] = useState([]);
+  const [existingProgress, setExistingProgress] = useState([]);
+
+  const getCurrentUser = () => {
+    const userData = localStorage.getItem('currentUser');
+    return userData ? JSON.parse(userData) : null;
+  };
 
   useEffect(() => {
     let interval;
@@ -129,7 +136,7 @@ const AudioImageTestPage = () => {
 
   useEffect(() => {
     const checkAuth = () => {
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = getCurrentUser();
       const userToken = localStorage.getItem('userToken');
       if (!currentUser || !userToken) {
         navigate('/');
@@ -147,9 +154,14 @@ const AudioImageTestPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
+      const user = getCurrentUser();
       
-      const [allWordsRes, lessonWordsRes, quizzesRes, wordStatsRes, progressRes] = await Promise.all([
+      if (!user || !user.id) {
+        navigate('/');
+        return;
+      }
+
+      const [allWordsRes, lessonWordsRes, quizzesRes, wordStatsRes, progressRes, existingProgressRes] = await Promise.all([
         fetch(`${API_CONFIG.BASE_URL}/api/Words`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
@@ -164,15 +176,19 @@ const AudioImageTestPage = () => {
         }),
         fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress/user/${user.id}/${lessonId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
-      const [allWordsData, lessonWordsData, quizzesData, wordStatsData, progressData] = await Promise.all([
+      const [allWordsData, lessonWordsData, quizzesData, wordStatsData, progressData, existingProgressData] = await Promise.all([
         allWordsRes.json(),
         lessonWordsRes.json(),
         quizzesRes.json(),
         wordStatsRes.json(),
-        progressRes.ok ? progressRes.json() : { testResults: [] }
+        progressRes.ok ? progressRes.json() : { testResults: [] },
+        existingProgressRes.ok ? existingProgressRes.json() : []
       ]);
       
       setAllWords(Array.isArray(allWordsData) ? allWordsData : []);
@@ -185,6 +201,7 @@ const AudioImageTestPage = () => {
         learnedWordsOverall: 0
       });
       setTestResults(progressData.testResults || []);
+      setExistingProgress(Array.isArray(existingProgressData) ? existingProgressData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -275,35 +292,114 @@ const AudioImageTestPage = () => {
   const sendProgress = async (isCorrect) => {
     try {
       const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
-      
-      const currentQuestion = shuffledQuestions[currentQuestionIndex];
-      const payload = {
-        userId: user.id,
-        lessonId: parseInt(lessonId),
-        wordId: currentQuestion.wordId,
-        questionType: 3, // 3 = audio-image test
-        isCorrect,
-        lessonWordId: currentQuestion.lessonWordId || 0
-      };
+      const user = getCurrentUser();
+      if (!user?.id) return;
 
-      await fetch(`${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+      if (!currentQuestion) return;
+
+      const existingRecord = existingProgress.find(
+        record => record.wordId === currentQuestion.wordId && 
+                 record.questionType === 'ImageAudioChoice'
+      );
+
+      if (existingRecord) {
+        await updateProgress(existingRecord.id, isCorrect);
+      } else {
+        await createProgress(isCorrect);
+      }
     } catch (error) {
-      console.error('Error sending progress:', error);
+      console.error('Ошибка при отправке прогресса:', error);
+    }
+  };
+
+  const createProgress = async (isCorrect) => {
+    const token = localStorage.getItem('userToken');
+    const user = getCurrentUser();
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+    if (!user?.id || !currentQuestion) return;
+
+    const payload = {
+      userId: user.id,
+      lessonId: parseInt(lessonId),
+      wordId: currentQuestion.wordId || 0,
+      questionType: 3, 
+      isCorrect,
+      lessonWordId: currentQuestion.lessonWordId || 0
+    };
+
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setExistingProgress(prev => [...prev, result]);
+        setUserProgressRecords(prev => [...prev, result]);
+      }
+    } catch (error) {
+      console.error('Error creating progress:', error);
+    }
+  };
+
+  const updateProgress = async (recordId, isCorrect) => {
+    const token = localStorage.getItem('userToken');
+    const user = getCurrentUser();
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+    if (!user?.id || !currentQuestion) return;
+
+    const payload = {
+      id: recordId,
+      userId: user.id,
+      lessonId: parseInt(lessonId),
+      wordId: currentQuestion.wordId || 0,
+      questionType: 'ImageAudioChoice',
+      isCorrect,
+      lessonWordId: currentQuestion.lessonWordId || 0
+    };
+
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/api/UserProgress/word-progress`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setExistingProgress(prev => 
+          prev.map(item => item.id === recordId ? result : item)
+        );
+        setUserProgressRecords(prev => 
+          prev.map(item => item.id === recordId ? result : item)
+        );
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
     }
   };
 
   const updateTestResults = async () => {
     try {
       const token = localStorage.getItem('userToken');
-      const user = JSON.parse(localStorage.getItem('currentUser'));
+      const user = getCurrentUser();
       
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/api/UserProgress/detailed/${user.id}/${lessonId}`,

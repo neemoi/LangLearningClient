@@ -10,6 +10,32 @@ const MathPage = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      navigate('/');
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isAuthorized]);
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   const sections = [
     { path: "/mini-lessons/numbers", name: "Дом" },
@@ -35,16 +61,6 @@ const MathPage = () => {
     e.stopPropagation();
     setShowDropdown(prev => !prev);
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const operations = [
     {
